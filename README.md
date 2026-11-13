@@ -24,7 +24,7 @@ Jogo 2D educativo em **pixel art isométrica**, feito em **Godot 4.3**. Você é
 | `Esc` | sair do atendimento sem resolver |
 | `P` | pausa · `M` liga/desliga o som ambiente · `N` liga/desliga os efeitos |
 
-- Sem música: há um **som ambiente de escritório** (ar-condicionado, teclados, telefone ao longe), que pode ser desligado separadamente dos efeitos sonoros.
+- Durante o jogo toca um **som ambiente de escritório** (gravação), que pode ser desligado separadamente dos efeitos sonoros.
 - Na tela inicial o aluno digita o **nome**, o **código da turma** e escolhe **pele, cabelo e camisa** do personagem.
 - **Treino**: expedientes seguidos, a sessão é **salva** no início de cada dia (botão *Continuar*).
 - **Avaliação**: um expediente (5 min), no fim aparece a nota e o botão **Baixar relatório**.
@@ -136,5 +136,14 @@ art/                          scripts que geram a pixel art (fonte dos sprites)
 assets/sprites/               sprites gerados
 resources/theme.tres          tema da interface (pixel)
 fonts/                        Pixelify Sans (licença OFL)
+assets/audio/                 som ambiente de escritório (ver Créditos)
 tests/                        testes headless, gerador de capturas e visão geral do andar (overview.gd)
 ```
+
+## Créditos
+
+- Som ambiente de escritório: "ambiente escritorio ok.wav", por *freesound_community* no Pixabay
+  (licença de conteúdo do Pixabay). O arquivo foi convertido para OGG, normalizado e ganhou uma
+  emenda em crossfade para tocar em loop.
+- Fonte Pixelify Sans: licença SIL Open Font License (fonts/OFL-PixelifySans.txt).
+- Biblioteca de pixel art: pixel-art-studio (MIT, art/_lib/).

@@ -1,6 +1,7 @@
 class_name Audio
 extends Node
-## Efeitos sonoros e som ambiente de escritório (assets/sfx, gerados por art/sfx/build.py).
+## Efeitos sonoros (assets/sfx, gerados por art/sfx/build.py) e som ambiente de escritório
+## durante o jogo (assets/audio/office_ambience.ogg, gravação do Pixabay/freesound_community).
 ## Ambiente e efeitos ligam/desligam separadamente. Teclas: M = ambiente, N = efeitos.
 ## A escolha fica salva.
 
@@ -24,12 +25,10 @@ func _ready() -> void:
 		add_child(p)
 		_pool.append(p)
 	_music = AudioStreamPlayer.new()
-	var m: AudioStreamWAV = load("res://assets/sfx/ambient.wav")
-	m.loop_mode = AudioStreamWAV.LOOP_FORWARD
-	m.loop_begin = 0
-	m.loop_end = m.data.size() / 2
+	var m: AudioStreamOggVorbis = load("res://assets/audio/office_ambience.ogg")
+	m.loop = true          # o arquivo já tem a emenda em crossfade: o loop não "pula"
 	_music.stream = m
-	_music.volume_db = -8.0
+	_music.volume_db = -2.0
 	add_child(_music)
 	var cfg := ConfigFile.new()
 	if cfg.load(PREF_PATH) == OK:
@@ -52,6 +51,10 @@ func play(name: String, volume_db := 0.0) -> void:
 func start_music() -> void:
 	if music_on and not _music.playing:
 		_music.play()
+
+
+func stop_music() -> void:
+	_music.stop()
 
 
 func set_music(on: bool) -> void:

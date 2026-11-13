@@ -175,7 +175,7 @@ func _init() -> void:
 	var au := Audio.new()
 	root.add_child(au)
 	check(au.music_on and au.sfx_on, "som ambiente e efeitos começam ligados (sem música)")
-	check(not ResourceLoader.exists("res://assets/sfx/music.wav") and ResourceLoader.exists("res://assets/sfx/ambient.wav"), "a música foi trocada pelo som ambiente de escritório")
+	check(ResourceLoader.exists("res://assets/audio/office_ambience.ogg") and (load("res://assets/audio/office_ambience.ogg") as AudioStream).get_length() > 60.0, "som ambiente de escritório (gravação) disponível para o jogo")
 	au.set_music(true)
 	au.set_sfx(false)
 	var au2 := Audio.new()

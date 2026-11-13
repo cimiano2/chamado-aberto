@@ -155,4 +155,6 @@ def ambient(seconds=30.0, fade=2.0):
     return [0.7 * v / peak for v in loop]
 
 
-save("ambient", ambient())
+# O jogo usa a gravação assets/audio/office_ambience.ogg; a versão sintetizada fica
+# disponível como alternativa: descomente para gerar assets/sfx/ambient.wav.
+# save("ambient", ambient())
