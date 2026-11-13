@@ -18,6 +18,7 @@ var _near_desk := -1
 @onready var _map: OfficeMap = %OfficeMap
 @onready var _player: Player = %Player
 @onready var _guide: Guide = %Guide
+@onready var _camera: Camera2D = %Camera2D
 @onready var _clock: Label = %ClockLabel
 @onready var _day: Label = %DayLabel
 @onready var _score: Label = %ScoreLabel
@@ -42,6 +43,12 @@ var _near_desk := -1
 
 func _ready() -> void:
 	_player.map = _map
+	_map.player = _player
+	var b := _map.iso_bounds()
+	_camera.limit_left = int(b.position.x)
+	_camera.limit_top = int(b.position.y)
+	_camera.limit_right = int(b.end.x)
+	_camera.limit_bottom = int(b.end.y)
 	_guide.player = _player
 	_minimap.map = _map
 	_minimap.player = _player
@@ -60,7 +67,7 @@ func _new_game() -> void:
 	tickets.day_ended.connect(_on_day_ended)
 	tickets.game_over.connect(_on_game_over)
 	tickets.start_day(1)
-	_player.position = Vector2(390, 1100)
+	_player.position = OfficeMap.START
 	_player.facing = Vector2.DOWN
 	_close_task()
 	_rebuild_ticket_list()
@@ -70,6 +77,7 @@ func _process(delta: float) -> void:
 	if state == State.PLAYING or state == State.TASK:
 		tickets.update(delta)
 	_player.can_move = state == State.PLAYING
+	_camera.position = OfficeMap.iso(_player.position, 18)
 	_sync_world()
 	_refresh_hud()
 
@@ -237,7 +245,7 @@ func _on_task_mistake() -> void:
 
 
 func _on_task_solved(summary: String) -> void:
-	_task_feedback.text = "✓ " + summary
+	_task_feedback.text = "RESOLVIDO! " + summary
 	_task_feedback.add_theme_color_override("font_color", Color("5cff8a"))
 	var id := _task_ticket_id
 	await get_tree().create_timer(1.8).timeout
@@ -364,7 +372,7 @@ func _on_overlay_action() -> void:
 			state = State.PLAYING
 		State.DAY_END:
 			tickets.start_day(tickets.day + 1)
-			_player.position = Vector2(390, 1100)
+			_player.position = OfficeMap.START
 			state = State.PLAYING
 			_show_toast("Dia %d · 09:00 · bom trabalho!" % tickets.day, Color("34e7e4"))
 		State.GAME_OVER:

@@ -61,16 +61,16 @@ func _on_run(i: int) -> void:
 	finished[i] = true
 	sequence.append("P%d" % i)
 	_buttons[i].disabled = true
-	_buttons[i].text = "✓ concluído"
+	_buttons[i].text = "OK concluído"
 	say("P%d terminou e devolveu %s." % [i, _vec(alloc[i])])
 	_refresh()
 	if not finished.has(false):
-		solve("Sequência segura encontrada: %s. Sistema destravado!" % " → ".join(sequence))
+		solve("Sequência segura encontrada: %s. Sistema destravado!" % " > ".join(sequence))
 
 
 func _refresh() -> void:
 	_work_label.text = "Disponível agora: %s" % _vec(work)
-	_seq_label.text = "Sequência: %s" % (" → ".join(sequence) if not sequence.is_empty() else "—")
+	_seq_label.text = "Sequência: %s" % (" > ".join(sequence) if not sequence.is_empty() else "—")
 
 
 func _vec(v: Array) -> String:

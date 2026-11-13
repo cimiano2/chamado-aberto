@@ -26,7 +26,7 @@ func _init() -> void:
 		var feet := Rect2(d.pos + Player.FEET.position, Player.FEET.size)
 		if not map.is_walkable(feet):
 			check(false, "ponto de atendimento caminhável: %s" % d.employee)
-	check(map.is_walkable(Rect2(Vector2(390, 1100) + Player.FEET.position, Player.FEET.size)), "posição inicial caminhável")
+	check(map.is_walkable(Rect2(OfficeMap.START + Player.FEET.position, Player.FEET.size)), "posição inicial caminhável")
 	check(not map.is_walkable(Rect2(Vector2(850, 300), Vector2(28, 14))), "parede entre salas bloqueia")
 
 	# ---- sistema de chamados

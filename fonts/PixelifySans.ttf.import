@@ -2,18 +2,18 @@
 
 importer="font_data_dynamic"
 type="FontFile"
-uid="uid://byapys0vfvjie"
-path="res://.godot/imported/JetBrainsMono-Regular.ttf-e1c4e1d22b8ac683c9c2806d9bd3f76d.fontdata"
+uid="uid://cvjlwpjx38sg2"
+path="res://.godot/imported/PixelifySans.ttf-fc5a9a3e822b21581d248cfb12b28920.fontdata"
 
 [deps]
 
-source_file="res://fonts/JetBrainsMono-Regular.ttf"
-dest_files=["res://.godot/imported/JetBrainsMono-Regular.ttf-e1c4e1d22b8ac683c9c2806d9bd3f76d.fontdata"]
+source_file="res://fonts/PixelifySans.ttf"
+dest_files=["res://.godot/imported/PixelifySans.ttf-fc5a9a3e822b21581d248cfb12b28920.fontdata"]
 
 [params]
 
 Rendering=null
-antialiasing=1
+antialiasing=0
 generate_mipmaps=false
 disable_embedded_bitmaps=true
 multichannel_signed_distance_field=false
@@ -21,7 +21,7 @@ msdf_pixel_range=8
 msdf_size=48
 allow_system_fallback=true
 force_autohinter=false
-hinting=1
+hinting=0
 subpixel_positioning=1
 oversampling=0.0
 Fallbacks=null

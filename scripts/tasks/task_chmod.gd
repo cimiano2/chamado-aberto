@@ -79,7 +79,7 @@ func _new_round() -> void:
 				if bits[g * 3 + k]:
 					can.append(PERM[k])
 			parts.append("%s: %s" % [WHO[g], ", ".join(can) if not can.is_empty() else "nada"])
-		_prompt.text = "Pedido do chamado para %s →  %s" % [file, " · ".join(parts)]
+		_prompt.text = "Pedido do chamado para %s:  %s" % [file, " · ".join(parts)]
 	_round_label.text = "Etapa %d de %d" % [round_i + 1, rounds]
 	_refresh()
 
@@ -94,7 +94,7 @@ func _state() -> Array[bool]:
 func _refresh() -> void:
 	var s := _state()
 	for i in _bits.size():
-		_bits[i].text = "[%d] %s" % [i + 1, "✓" if s[i] else "  "]
+		_bits[i].text = "[%d] %s" % [i + 1, "X" if s[i] else "  "]
 		tint_button(_bits[i], GOOD if s[i] else Color("2a3566"))
 	_current.text = "Atual: %s  =  %s" % [OSLogic.bits_to_symbolic(s), OSLogic.bits_to_octal(s)]
 

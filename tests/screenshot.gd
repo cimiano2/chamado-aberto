@@ -25,10 +25,16 @@ func _init() -> void:
 	player.facing = Vector2.UP
 	for i in 40: await process_frame
 	await _shot(out + "/jogo.png")
-	player.position = Vector2(1270, 690)
+	player.position = Vector2(1180, 680)
 	player.facing = Vector2.RIGHT
 	for i in 40: await process_frame
 	await _shot(out + "/corredor.png")
+	player.facing = Vector2(-1, -1)
+	for i in 5: await process_frame
+	await _shot(out + "/costas_esq.png")
+	player.facing = Vector2(-1, 1)
+	for i in 5: await process_frame
+	await _shot(out + "/frente_esq.png")
 	for kind in ["cpu", "paging", "deadlock", "disk", "chmod", "alloc"]:
 		var tk := {"id": 42, "desk": 0, "kind": kind, "dept": "Financeiro", "employee": "Carla",
 			"title": TicketSystem.TYPES[kind].titles[0], "priority": false, "sla_total": 999.0, "sla_left": 999.0}

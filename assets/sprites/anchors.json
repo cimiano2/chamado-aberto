@@ -1,0 +1,66 @@
+{
+ "desk": [
+  30,
+  32
+ ],
+ "desk_alert": [
+  30,
+  32
+ ],
+ "rack": [
+  27,
+  58
+ ],
+ "rack_alert": [
+  27,
+  58
+ ],
+ "plant": [
+  13,
+  29
+ ],
+ "cooler": [
+  9,
+  34
+ ],
+ "alert": [
+  5,
+  11
+ ],
+ "alert_high": [
+  5,
+  11
+ ],
+ "alert_urgent": [
+  5,
+  11
+ ],
+ "floor_diretoria": [
+  16,
+  8
+ ],
+ "floor_financeiro": [
+  16,
+  8
+ ],
+ "floor_rh": [
+  16,
+  8
+ ],
+ "floor_suporte": [
+  16,
+  8
+ ],
+ "floor_marketing": [
+  16,
+  8
+ ],
+ "floor_servidores": [
+  16,
+  8
+ ],
+ "floor_corredor": [
+  16,
+  8
+ ]
+}

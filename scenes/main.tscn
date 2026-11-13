@@ -9,29 +9,50 @@
 [node name="Main" type="Node"]
 script = ExtResource("1_main")
 
-[node name="World" type="Node2D" parent="."]
+[node name="WorldView" type="SubViewportContainer" parent="."]
+texture_filter = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+stretch = true
+stretch_shrink = 2
 
-[node name="OfficeMap" type="Node2D" parent="World"]
+[node name="SubViewport" type="SubViewport" parent="WorldView"]
+disable_3d = true
+handle_input_locally = false
+snap_2d_transforms_to_pixel = true
+snap_2d_vertices_to_pixel = true
+canvas_item_default_texture_filter = 0
+size = Vector2i(640, 360)
+render_target_update_mode = 4
+
+[node name="Backdrop" type="ColorRect" parent="WorldView/SubViewport"]
+offset_left = -2000.0
+offset_top = -2000.0
+offset_right = 2000.0
+offset_bottom = 2000.0
+color = Color(0.094, 0.078, 0.145, 1)
+
+[node name="OfficeMap" type="Node2D" parent="WorldView/SubViewport"]
 unique_name_in_owner = true
 script = ExtResource("2_map")
 
-[node name="Player" type="Node2D" parent="World"]
+[node name="Player" type="Node2D" parent="WorldView/SubViewport"]
 unique_name_in_owner = true
-position = Vector2(390, 1100)
+position = Vector2(448, 1080)
 script = ExtResource("3_player")
 
-[node name="Camera2D" type="Camera2D" parent="World/Player"]
-offset = Vector2(0, -30)
-limit_left = -40
-limit_top = -40
-limit_right = 2580
-limit_bottom = 1400
-position_smoothing_enabled = true
-position_smoothing_speed = 7.0
-
-[node name="Guide" type="Node2D" parent="World"]
+[node name="Guide" type="Node2D" parent="WorldView/SubViewport"]
 unique_name_in_owner = true
 script = ExtResource("4_guide")
+
+[node name="Camera2D" type="Camera2D" parent="WorldView/SubViewport"]
+unique_name_in_owner = true
+position_smoothing_enabled = true
+position_smoothing_speed = 8.0
 
 [node name="HUD" type="CanvasLayer" parent="."]
 
