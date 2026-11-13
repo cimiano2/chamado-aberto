@@ -35,11 +35,55 @@
   5,
   11
  ],
- "floor_diretoria": [
+ "conference_table": [
+  71,
+  59
+ ],
+ "vending": [
+  16,
+  56
+ ],
+ "fridge": [
+  14,
+  57
+ ],
+ "counter": [
+  33,
+  48
+ ],
+ "kitchen_table": [
+  29,
+  32
+ ],
+ "filing": [
+  12,
+  34
+ ],
+ "copier": [
+  18,
+  39
+ ],
+ "reception": [
+  34,
+  40
+ ],
+ "sofa": [
+  25,
+  36
+ ],
+ "floor_carpete": [
   16,
   8
  ],
- "floor_financeiro": [
+ "floor_gerente": [
+  16,
+  8
+ ],
+ "floor_reuniao": [
+  16,
+  8
+ ],
+ "floor_anexo": [
   16,
   8
  ],
@@ -47,19 +91,19 @@
   16,
   8
  ],
- "floor_suporte": [
+ "floor_ti": [
   16,
   8
  ],
- "floor_marketing": [
+ "floor_copa_a": [
+  16,
+  8
+ ],
+ "floor_copa_b": [
   16,
   8
  ],
  "floor_servidores": [
-  16,
-  8
- ],
- "floor_corredor": [
   16,
   8
  ]

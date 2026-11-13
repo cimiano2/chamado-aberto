@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bf7pja42gjr46"
-path="res://.godot/imported/floor_marketing.png-483193149043bad7ff1ff7bfa8905ff8.ctex"
+uid="uid://ciefcjoh8anup"
+path="res://.godot/imported/floor_copa_b.png-bf7a06acf5f6fd544b4247d1fa38391f.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/floor_marketing.png"
-dest_files=["res://.godot/imported/floor_marketing.png-483193149043bad7ff1ff7bfa8905ff8.ctex"]
+source_file="res://assets/sprites/floor_copa_b.png"
+dest_files=["res://.godot/imported/floor_copa_b.png-bf7a06acf5f6fd544b4247d1fa38391f.ctex"]
 
 [params]
 

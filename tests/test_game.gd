@@ -21,13 +21,13 @@ func _init() -> void:
 	await process_frame
 	await process_frame
 	var map: OfficeMap = main.get_node("%OfficeMap")
-	check(map.desks.size() == 20, "20 mesas/servidores com chamados possíveis")
+	check(map.desks.size() >= 12, "%d postos com chamado no andar" % map.desks.size())
 	for d in map.desks:
 		var feet := Rect2(d.pos + Player.FEET.position, Player.FEET.size)
 		if not map.is_walkable(feet):
 			check(false, "ponto de atendimento caminhável: %s" % d.employee)
 	check(map.is_walkable(Rect2(OfficeMap.START + Player.FEET.position, Player.FEET.size)), "posição inicial caminhável")
-	check(not map.is_walkable(Rect2(Vector2(850, 300), Vector2(28, 14))), "parede entre salas bloqueia")
+	check(not map.is_walkable(Rect2(Vector2(470, 220), Vector2(28, 14))), "parede entre salas bloqueia")
 
 	# ---- cenário: objetos dentro do piso, portas livres, mesas alcançáveis
 	var outside := []
@@ -45,8 +45,8 @@ func _init() -> void:
 	check(blocked_doors.is_empty(), "nenhuma porta bloqueada %s" % [blocked_doors])
 	# parede alta só na borda norte ou como bloco único da coluna oeste
 	# (o erro antigo: uma faixa de 2560 un. na borda da frente começando em x=0 virava parede alta)
-	var bad_walls := map.walls.filter(func(w): return map.is_back_wall(w) and not (w.position.y < 64 or (w.position.x < 64 and w.size.x <= 64)))
-	var front_tall := map.walls.filter(func(w): return map.is_back_wall(w) and w.position.y >= map.world_rect.end.y - 64 and w.size.x > 64)
+	var bad_walls := map.walls.filter(func(w): return w.kind == "back" and not (w.rect.position.y < 64 or w.rect.position.x < 64))
+	var front_tall := map.walls.filter(func(w): return (w.kind == "glass" or (w.kind == "back" and w.rect.position.x >= 64)) and w.rect.end.y >= map.world_rect.end.y)
 	check(bad_walls.is_empty() and front_tall.is_empty(), "parede alta só no fundo do andar (nenhuma na frente)")
 	# busca em largura numa grade de 16 un. a partir da sala do suporte
 	var step := 16.0
@@ -72,8 +72,8 @@ func _init() -> void:
 	check(unreachable.is_empty(), "todas as %d mesas com chamado são alcançáveis %s" % [map.desks.size(), unreachable])
 
 	# ---- sistema de chamados
+	main.start_session({"name": "Teste", "class_code": "", "skin": 0, "hair": 0, "shirt": 0}, "treino", false)
 	var ts: TicketSystem = main.tickets
-	main._on_overlay_action()   # sai da tela de título
 	var t := ts.spawn()
 	check(not t.is_empty() and ts.tickets.size() == 1, "chamado aberto numa mesa")
 	ts.spawn_timer = 9999.0
@@ -125,9 +125,54 @@ func _init() -> void:
 	tk2.sla_left = 0.01
 	ts.update(0.1)
 	await process_frame
-	check(main.state == main.State.GAME_OVER, "satisfação zerada encerra o jogo")
-	main._on_overlay_action()
-	check(main.tickets.day == 1 and main.tickets.satisfaction == 100.0, "Enter recomeça do dia 1")
+	check(main.state == main.State.FINAL, "satisfação zerada encerra o jogo e mostra o resultado")
+	main._on_overlay_secondary()
+	check(main.state == main.State.TITLE and main.tickets.day == 1 and main.tickets.satisfaction == 100.0, "volta ao menu com sessão nova")
+
+	# ---- pontuação: rapidez, prioridade, erros e sequência
+	var tsp := TicketSystem.new(map.desks, 1)
+	var fast := {"sla_left": 90.0, "sla_total": 90.0, "priority": false}
+	check(tsp.points_for(fast, 0) == 200, "chamado resolvido na hora vale 200")
+	check(tsp.points_for({"sla_left": 45.0, "sla_total": 90.0, "priority": true}, 1) == 175, "metade do prazo + prioridade − 1 erro = 175")
+	tsp.combo = 3
+	check(tsp.points_for(fast, 0) == 260, "sequência de 3 sem erro multiplica por 1,3")
+	check(tsp.points_for(fast, 2) == 150, "erro zera o multiplicador")
+
+	# ---- relatório: código confere e adulteração é detectada
+	var rep_ts := TicketSystem.new(map.desks, 5)
+	rep_ts.start_day(1)
+	for i in 3:
+		var tk3 := rep_ts.spawn()
+		rep_ts.resolve(tk3.id, i % 2)
+	var rd := Report.data({"name": "Maria Ávila", "class_code": "INFO1A"}, rep_ts, "Avaliação", 0)
+	var page := Report.html(rd)
+	check(Report.verify_html(page).ok, "relatório gerado confere o código de verificação")
+	var tampered := page.replace('"pontos":%d' % rd.pontos, '"pontos":%d' % (rd.pontos + 500))
+	check(tampered != page and not Report.verify_html(tampered).ok, "relatório com pontos alterados é detectado")
+	check(page.contains("Maria Ávila") and page.contains("INFO1A"), "relatório traz nome e turma")
+
+	# ---- skins: as cores mudam no sprite
+	var base_img := Skins.image(0, 0, 0)
+	var skin_img := Skins.image(3, 2, 1)
+	var changed := 0
+	for y in base_img.get_height():
+		for x in base_img.get_width():
+			if base_img.get_pixel(x, y) != skin_img.get_pixel(x, y):
+				changed += 1
+	check(changed > 100, "skin recolore o técnico (%d pixels)" % changed)
+
+	# ---- sessão salva: continuar restaura a pontuação e conta o reinício
+	var prof := {"name": "Teste Save", "class_code": "T1", "skin": 1, "hair": 2, "shirt": 3}
+	main.start_session(prof, "avaliacao", false)
+	main.tickets.score = 777
+	main._save_session(false)
+	main.start_session(prof, "avaliacao", true)
+	check(main.tickets.score == 777 and main.restarts == 1, "continuar sessão restaura pontos e registra 1 reinício")
+	var a_seed: int = main.tickets.rng.seed
+	main.start_session(prof, "avaliacao", false)
+	check(main.tickets.rng.seed == a_seed, "mesmo código de turma = mesma sequência de chamados")
+	SaveGame.clear()
+	SaveGame.clear_board()
 
 	print("\n%s" % ("TODOS OS TESTES PASSARAM" if failures == 0 else "%d FALHA(S)" % failures))
 	quit(1 if failures > 0 else 0)

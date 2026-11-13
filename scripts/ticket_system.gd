@@ -49,6 +49,13 @@ var day_finished := false
 # estatísticas do dia
 var day_resolved := 0
 var day_expired := 0
+# pontuação competitiva
+var combo := 0                     # chamados seguidos resolvidos sem erro
+var best_combo := 0
+var history: Array[Dictionary] = []    # um registro por chamado (vai para o relatório)
+var stats := {}                    # tipo -> {resolved, clean, mistakes, expired}
+var play_seconds := 0.0
+var _work := {}                    # id -> segundos gastos atendendo
 
 
 func _init(desk_list: Array, seed_value: int = -1) -> void:
@@ -88,6 +95,9 @@ func update(delta: float) -> void:
 	if is_over or day_finished:
 		return
 	clock += delta * (DAY_END - DAY_START) / DAY_SECONDS
+	play_seconds += delta
+	if active_id >= 0:
+		_work[active_id] = _work.get(active_id, 0.0) + delta
 	spawn_timer -= delta
 	if spawn_timer <= 0.0 and clock < DAY_END - 20:
 		spawn()
@@ -101,6 +111,10 @@ func update(delta: float) -> void:
 			expired += 1
 			day_expired += 1
 			satisfaction -= 12.0 if t.priority else 8.0
+			score = maxi(0, score - 50)
+			combo = 0
+			_stat(t.kind).expired += 1
+			_log(t, "estourado", 0, -50)
 			ticket_expired.emit(t)
 	satisfaction = clampf(satisfaction, 0.0, 100.0)
 	if satisfaction <= 0.0:
@@ -173,6 +187,7 @@ func cancel() -> void:
 
 func register_mistake() -> void:
 	mistakes += 1
+	combo = 0
 	satisfaction = maxf(0.0, satisfaction - 1.0)
 
 
@@ -184,9 +199,85 @@ func resolve(id: int, task_mistakes: int) -> int:
 	tickets.erase(t)
 	resolved += 1
 	day_resolved += 1
-	var pts := 100 + int(t.sla_left) * 2 + (100 if t.priority else 0) - task_mistakes * 20
-	pts = maxi(30, pts)
+	var pts := points_for(t, task_mistakes)
+	if task_mistakes == 0:
+		combo += 1
+		best_combo = maxi(best_combo, combo)
 	score += pts
 	satisfaction = minf(100.0, satisfaction + 4.0)
+	var st := _stat(t.kind)
+	st.resolved += 1
+	st.mistakes += task_mistakes
+	if task_mistakes == 0:
+		st.clean += 1
+	_log(t, "resolvido", task_mistakes, pts)
 	ticket_resolved.emit(t, pts)
 	return pts
+
+
+## Pontos: base 100 + rapidez (até 100) + prioridade (50) − 25 por erro, × sequência sem erros.
+func points_for(t: Dictionary, task_mistakes: int) -> int:
+	var speed := int(round(100.0 * clampf(t.sla_left / t.sla_total, 0.0, 1.0)))
+	var base := 100 + speed + (50 if t.priority else 0) - 25 * task_mistakes
+	var mult := multiplier_after(task_mistakes)
+	return maxi(20, int(round(base * mult)))
+
+
+## Multiplicador da sequência que vale para o chamado que está sendo fechado.
+func multiplier_after(task_mistakes: int) -> float:
+	if task_mistakes > 0:
+		return 1.0
+	return 1.0 + 0.1 * mini(combo, 5)
+
+
+## Nota de 0 a 10: 40% resolução, 40% precisão, 20% agilidade.
+func grade() -> Dictionary:
+	var finished := resolved + expired + (tickets.size() if day_finished else 0)
+	var resolution := float(resolved) / finished if finished > 0 else 0.0
+	var clean := 0
+	var speed_sum := 0.0
+	var speed_n := 0
+	for e in history:
+		if e.result == "resolvido":
+			if e.mistakes == 0:
+				clean += 1
+			speed_sum += e.sla_ratio
+			speed_n += 1
+	var accuracy := float(clean) / resolved if resolved > 0 else 0.0
+	var agility := speed_sum / speed_n if speed_n > 0 else 0.0
+	var nota := 10.0 * (0.4 * resolution + 0.4 * accuracy + 0.2 * agility)
+	return {"nota": snappedf(nota, 0.1), "resolution": resolution, "accuracy": accuracy, "agility": agility}
+
+
+func _stat(kind: String) -> Dictionary:
+	if not stats.has(kind):
+		stats[kind] = {"resolved": 0, "clean": 0, "mistakes": 0, "expired": 0}
+	return stats[kind]
+
+
+func _log(t: Dictionary, result: String, task_mistakes: int, pts: int) -> void:
+	history.append({"id": t.id, "day": day, "clock": clock_text(), "kind": t.kind, "dept": t.dept,
+		"employee": t.employee, "title": t.title, "result": result, "mistakes": task_mistakes,
+		"work_s": snappedf(_work.get(t.id, 0.0), 0.1), "sla_ratio": clampf(t.sla_left / t.sla_total, 0.0, 1.0),
+		"points": pts})
+
+
+## Estado acumulado (para salvar a sessão no início de cada dia).
+func to_dict() -> Dictionary:
+	return {"day": day, "satisfaction": satisfaction, "score": score, "resolved": resolved,
+		"expired": expired, "mistakes": mistakes, "next_id": next_id, "best_combo": best_combo,
+		"history": history, "stats": stats, "play_seconds": play_seconds}
+
+
+func from_dict(d: Dictionary) -> void:
+	day = int(d.get("day", 1))
+	satisfaction = float(d.get("satisfaction", 100.0))
+	score = int(d.get("score", 0))
+	resolved = int(d.get("resolved", 0))
+	expired = int(d.get("expired", 0))
+	mistakes = int(d.get("mistakes", 0))
+	next_id = int(d.get("next_id", 1))
+	best_combo = int(d.get("best_combo", 0))
+	play_seconds = float(d.get("play_seconds", 0.0))
+	history.assign(d.get("history", []))
+	stats = d.get("stats", {})

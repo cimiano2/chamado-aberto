@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://q6mtnnu74pif"
-path="res://.godot/imported/floor_diretoria.png-3b3b011460b6b89183c415579779b96b.ctex"
+uid="uid://dwissytyunk8v"
+path="res://.godot/imported/floor_gerente.png-bca715062d1074843f4001ab680da10d.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/floor_diretoria.png"
-dest_files=["res://.godot/imported/floor_diretoria.png-3b3b011460b6b89183c415579779b96b.ctex"]
+source_file="res://assets/sprites/floor_gerente.png"
+dest_files=["res://.godot/imported/floor_gerente.png-bca715062d1074843f4001ab680da10d.ctex"]
 
 [params]
 

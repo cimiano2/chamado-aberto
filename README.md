@@ -1,8 +1,12 @@
 # Chamado Aberto
 
-Jogo 2D educativo em **pixel art isométrica**, feito em **Godot 4.3**. Você é o **técnico de TI** do 7º andar de uma grande empresa: anda pelo escritório **com o teclado**, chega nas mesas com chamado aberto e resolve o problema antes que o prazo (SLA) estoure. Os problemas são os do **dia a dia de um técnico de suporte**, no nível do 1º semestre do curso técnico em informática.
+Jogo 2D educativo em **pixel art isométrica**, feito em **Godot 4.3**. Você é o **técnico de TI** da *Papéis Horizonte Ltda.*, um escritório de vendas com área aberta, sala do gerente com parede de vidro, sala de reunião, copa, anexo de RH e contabilidade e sala de servidores: anda pelo escritório **com o teclado**, chega nas mesas com chamado aberto e resolve o problema antes que o prazo (SLA) estoure. Os problemas são os do **dia a dia de um técnico de suporte**, no nível do 1º semestre do curso técnico em informática.
 
 ![Escritório](docs/jogo.png)
+
+| Tela inicial | Relatório |
+|---|---|
+| ![menu](docs/menu.png) | ![relatório](docs/relatorio.png) |
 
 <details><summary>Mapa do andar inteiro</summary>
 
@@ -14,18 +18,34 @@ Jogo 2D educativo em **pixel art isométrica**, feito em **Godot 4.3**. Você é
 
 | Tecla | Ação |
 |---|---|
-| `WASD` / setas | andar (as direções seguem a tela: cima = sobe na tela) |
+| `WASD` / setas | andar (as direções seguem a tela) |
 | `E` (ou `Espaço`/`Enter`) | atender o chamado da mesa à sua frente |
-| `1`–`9` | escolher opções dentro do atendimento |
-| `Enter` | confirmar (quando houver botão principal) |
+| `1`–`9` / `Enter` | escolher e confirmar dentro do atendimento |
 | `Esc` | sair do atendimento sem resolver |
-| `P` | pausa para o café |
+| `P` | pausa · `M` liga/desliga o som |
 
-- A **seta amarela** em volta do técnico aponta para o chamado mais urgente, e o minimapa mostra todos.
-- O prazo do chamado que você está atendendo **para**, mas o dos outros continua correndo.
-- Chamados da **Diretoria** têm prioridade alta: prazo menor e mais pontos.
-- O expediente vai das 09:00 às 18:00 (5 minutos reais). A cada dia os chamados chegam mais rápido.
-- Se a **satisfação dos usuários** zerar, você é chamado na sala do gerente.
+- Na tela inicial o aluno digita o **nome**, o **código da turma** e escolhe **pele, cabelo e camisa** do personagem.
+- **Treino**: expedientes seguidos, a sessão é **salva** no início de cada dia (botão *Continuar*).
+- **Avaliação**: um expediente (5 min), no fim aparece a nota e o botão **Baixar relatório**.
+- Os funcionários falam em **balões** sobre a cabeça; a seta amarela aponta o chamado mais urgente.
+
+## Pontuação e avaliação
+
+| Evento | Pontos |
+|---|---|
+| Chamado resolvido | 100 |
+| Rapidez | até +100 (proporcional ao prazo que sobrou) |
+| Chamado da Gerência | +50 |
+| Cada erro no atendimento | −25 |
+| Sequência sem erros | multiplica ×1,1 … ×1,5 |
+| Prazo estourado | −50 |
+
+**Nota de 0 a 10** = 40% taxa de resolução + 40% precisão (resolvidos sem erro) + 20% agilidade.
+
+- Com o **mesmo código de turma**, todos os alunos recebem a **mesma sequência de chamados** (avaliação justa).
+- O relatório (HTML, abre em qualquer navegador e imprime em PDF) traz nota, pontos, desempenho por tipo, todos os chamados, pontos fracos, número de reinícios da sessão e um **código de verificação**.
+- O professor abre **[verificar.html](https://cimiano2.github.io/chamado-aberto/verificar.html)**, seleciona os relatórios recebidos e vê o **ranking da turma** e se algum foi **alterado**. Nada é enviado para a internet.
+- Na web, o relatório é baixado pelo navegador; no executável, é salvo em *Documentos*.
 
 ## Os chamados
 
@@ -53,7 +73,7 @@ Os casos são sorteados a cada atendimento e, quando você erra, o jogo explica 
 godot --headless --path . --import
 godot --headless --path . -s tests/test_logic.gd
 godot --headless --path . -s tests/test_game.gd
-godot --headless --path . -s tests/test_camera.gd
+godot --headless --fixed-fps 60 --path . -s tests/test_camera.gd
 ```
 
 - `test_logic.gd`: política de senha e consistência dos dados dos chamados.
@@ -70,7 +90,8 @@ Cada asset tem um `build.py` que é a fonte da arte; os PNGs em `assets/sprites/
 pip install pillow
 python3 art/technician/build.py    # técnico: 3/4 frente e costas, 4 quadros de caminhada
 python3 art/employees/build.py     # 8 funcionários sentados + cadeira
-python3 art/office/build.py        # mesas, racks, planta, bebedouro, balões e pisos isométricos
+python3 art/office/build.py        # mobília (mesas, reunião, copa, copiadora, recepção...) e pisos
+python3 art/sfx/build.py           # efeitos sonoros e música chiptune (síntese, sem samples)
 ```
 
 Regras seguidas: paleta única **endesga32**, luz do alto-esquerda, contorno de 1 px, rampas com
@@ -94,6 +115,13 @@ scripts/office_map.gd         andar: salas, mesas, colisão e desenho isométric
 scripts/player.gd             técnico controlado pelo teclado (direções da tela → mundo)
 scripts/guide.gd              seta para o chamado mais urgente
 scripts/minimap.gd            minimapa
+scripts/menu.gd               tela inicial: nome, turma, skin, modo, continuar, placar
+scripts/skins.gd              recoloração do técnico (pele, cabelo, camisa)
+scripts/save_game.gd          sessão salva e placar local
+scripts/report.gd             relatório HTML com código de verificação
+scripts/balloons.gd           balões de fala sobre os personagens
+scripts/audio.gd              sons e música
+web/verificar.html            página do professor: confere relatórios e monta o ranking
 scripts/helpdesk.gd           conteúdo e regras dos chamados (testados)
 scripts/tasks/task_base.gd    base dos minijogos (teclas 1–9 / Enter)
 scripts/tasks/task_*.gd       os seis minijogos

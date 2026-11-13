@@ -44,13 +44,14 @@ jobs:
         run: |
           ./godot --headless --path . -s tests/test_logic.gd
           ./godot --headless --path . -s tests/test_game.gd
-          ./godot --headless --path . -s tests/test_camera.gd
+          ./godot --headless --fixed-fps 60 --path . -s tests/test_camera.gd
 
       - name: Exportar para Web
         run: |
           mkdir -p build/web
           ./godot --headless --path . --export-release "Web" build/web/index.html
           test -f build/web/index.html
+          cp web/verificar.html build/web/verificar.html
 
       - uses: actions/upload-pages-artifact@v3
         if: github.ref == 'refs/heads/main'

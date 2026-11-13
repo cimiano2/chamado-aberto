@@ -173,14 +173,157 @@ def tile(name, dark, light):
     return s
 
 
+# ================================================================ escritório (inspiração: escritório de vendas)
+def auto(fw, fd, h, extra=0):
+    """Canvas que cabe uma peça de pegada fw x fd e altura h; devolve (sprite, ax, ay)."""
+    hw = (fw + fd) / 8
+    w = int(hw * 2) + 6
+    hgt = int((fw + fd) / 8 + h + extra) + 6
+    return canvas(w, hgt), round(hw + 3), round((fw + fd) / 16 + h + extra + 3)
+
+
+def chair_piece(s, ax, ay, ox, oy, back_side):
+    """Cadeira de escritório: assento + encosto (back_side: 'n' ou 's')."""
+    iso_box(s, ax, ay, 26, 26, 8, METAL[1], METAL[0], METAL[0], ox=ox, oy=oy)
+    boy = oy - 12 if back_side == "n" else oy + 12
+    iso_box(s, ax, ay, 26, 5, 10, METAL[1], METAL[0], METAL[0], z0=8, ox=ox, oy=boy)
+
+
+def conference_table():
+    s, ax, ay = auto(256 + 80, 128 + 80, 22)
+    for x in (-90, -30, 30, 90):
+        chair_piece(s, ax, ay, x, -88, "n")
+    iso_box(s, ax, ay, 24, 24, 12, METAL[0], METAL[0], METAL[0], ox=-80)
+    iso_box(s, ax, ay, 24, 24, 12, METAL[0], METAL[0], METAL[0], ox=80)
+    iso_box(s, ax, ay, 256, 128, 4, WOOD[2], WOOD[1], WOOD[0], z0=12)
+    a = iso(ax, ay, -100, -20, 16); b = iso(ax, ay, 60, -20, 16)
+    s.line(a[0], a[1], b[0], b[1], WOOD[1])
+    # papéis e um telefone de conferência no meio
+    iso_box(s, ax, ay, 26, 20, 1, "#ffffff", "#c0cbdc", "#c0cbdc", z0=16, ox=-70, oy=10, outline=False)
+    iso_box(s, ax, ay, 26, 20, 1, "#ffffff", "#c0cbdc", "#c0cbdc", z0=16, ox=50, oy=-20, outline=False)
+    iso_box(s, ax, ay, 20, 20, 3, "#262b44", "#181425", "#181425", z0=16)
+    for x in (-90, -30, 30, 90):
+        chair_piece(s, ax, ay, x, 88, "s")
+    save(s, "conference_table", (ax, ay))
+
+
+def vending():
+    s, ax, ay = auto(56, 48, 46)
+    iso_box(s, ax, ay, 56, 48, 46, "#e43b44", "#a22633", "#68386c")
+    # vitrine na face sul com fileiras de lanches coloridos
+    for row in range(4):
+        z = 12 + row * 8
+        a = iso(ax, ay, -22, 24, z); b = iso(ax, ay, 14, 24, z)
+        s.line(a[0], a[1], b[0], b[1], "#c0cbdc")
+        for k, col in enumerate(("#feae34", "#63c74d", "#0099db", "#f6757a")):
+            p = iso(ax, ay, -18 + k * 9, 24, z + 3)
+            s.px(p[0], p[1], col)
+    p = iso(ax, ay, 22, 24, 30); s.px(p[0], p[1], "#fee761")       # moedeiro
+    save(s, "vending", (ax, ay))
+
+
+def fridge():
+    s, ax, ay = auto(48, 44, 48)
+    iso_box(s, ax, ay, 48, 44, 48, "#ffffff", "#c0cbdc", "#8b9bb4")
+    a = iso(ax, ay, -24, 22, 32); b = iso(ax, ay, 24, 22, 32)
+    s.line(a[0], a[1], b[0], b[1], "#8b9bb4")                       # divisão do freezer
+    for z0, z1 in ((36, 44), (14, 28)):
+        p = iso(ax, ay, 18, 22, z0); q = iso(ax, ay, 18, 22, z1)
+        s.line(p[0], p[1], q[0], q[1], "#5a6988")                    # puxadores
+    save(s, "fridge", (ax, ay))
+
+
+def counter():
+    s, ax, ay = auto(192, 48, 30)
+    iso_box(s, ax, ay, 192, 48, 14, "#c0cbdc", "#8b9bb4", "#5a6988")
+    iso_box(s, ax, ay, 40, 26, 1, "#3a4466", "#262b44", "#262b44", z0=14, ox=-40, outline=False)   # pia
+    iso_box(s, ax, ay, 40, 30, 12, "#ffffff", "#c0cbdc", "#8b9bb4", z0=14, ox=55)                  # micro-ondas
+    p = iso(ax, ay, 40, 15, 22); q = iso(ax, ay, 66, 15, 22)
+    s.line(p[0], p[1], q[0], q[1], "#262b44")
+    iso_box(s, ax, ay, 12, 12, 8, "#f6757a", "#b55088", "#68386c", z0=14, ox=10, oy=6)            # cafeteira
+    save(s, "counter", (ax, ay))
+
+
+def kitchen_table():
+    s, ax, ay = auto(64 + 40, 64 + 40, 16)
+    chair_piece(s, ax, ay, 0, -46, "n")
+    iso_box(s, ax, ay, 10, 10, 12, METAL[0], METAL[0], METAL[0])
+    iso_box(s, ax, ay, 64, 64, 3, "#ffffff", "#c0cbdc", "#8b9bb4", z0=12)
+    iso_box(s, ax, ay, 10, 10, 4, "#e43b44", "#a22633", "#a22633", z0=15, ox=10, oy=-6, outline=False)  # caneca
+    chair_piece(s, ax, ay, 0, 46, "s")
+    save(s, "kitchen_table", (ax, ay))
+
+
+def filing():
+    s, ax, ay = auto(40, 32, 26)
+    iso_box(s, ax, ay, 40, 32, 26, "#c0cbdc", "#8b9bb4", "#5a6988")
+    for z in (8, 16, 24):
+        a = iso(ax, ay, -20, 16, z); b = iso(ax, ay, 20, 16, z)
+        s.line(a[0], a[1], b[0], b[1], "#5a6988")
+        p = iso(ax, ay, 0, 16, z - 4); s.px(p[0], p[1], "#262b44")
+    save(s, "filing", (ax, ay))
+
+
+def copier():
+    s, ax, ay = auto(72, 52, 28)
+    iso_box(s, ax, ay, 72, 52, 18, "#c0cbdc", "#8b9bb4", "#5a6988")
+    iso_box(s, ax, ay, 60, 44, 3, "#3a4466", "#262b44", "#262b44", z0=18)                # tampa
+    iso_box(s, ax, ay, 22, 14, 3, "#ffffff", "#c0cbdc", "#c0cbdc", z0=10, ox=42, outline=False)  # bandeja
+    p = iso(ax, ay, 26, -16, 21); s.px(p[0], p[1], "#63c74d"); s.px(p[0] + 1, p[1], "#0099db")
+    save(s, "copier", (ax, ay))
+
+
+def reception():
+    s, ax, ay = auto(192, 56, 22)
+    iso_box(s, ax, ay, 192, 56, 18, WOOD[1], WOOD[0], "#3e2731")
+    iso_box(s, ax, ay, 192, 20, 3, WOOD[2], WOOD[1], WOOD[0], z0=18, oy=18)   # balcão alto
+    a = iso(ax, ay, -96, 28, 9); b = iso(ax, ay, 96, 28, 9)
+    s.line(a[0], a[1], b[0], b[1], WOOD[2])                                      # friso
+    iso_box(s, ax, ay, 40, 6, 14, METAL[1], METAL[0], METAL[0], z0=18, ox=-40, oy=-14)  # monitor
+    save(s, "reception", (ax, ay))
+
+
+def sofa():
+    s, ax, ay = auto(128, 48, 22)
+    iso_box(s, ax, ay, 128, 14, 20, "#5a6988", "#3a4466", "#262b44", oy=-17)        # encosto
+    iso_box(s, ax, ay, 128, 34, 9, "#8b9bb4", "#5a6988", "#3a4466", oy=7)           # assento
+    iso_box(s, ax, ay, 14, 48, 14, "#5a6988", "#3a4466", "#262b44", ox=-57)          # braços
+    iso_box(s, ax, ay, 14, 48, 14, "#5a6988", "#3a4466", "#262b44", ox=57)
+    save(s, "sofa", (ax, ay))
+
+
+def carpet_tile(name, dark, light, speck):
+    s = canvas(32, 16)
+    s.polygon([(16, 0), (31, 7), (16, 15), (0, 7)], dark)
+    s.noise(0, 0, 31, 15, speck, density=0.18, seed=len(name), only=dark)
+    s.line(16, 0, 31, 7, light); s.line(16, 0, 0, 7, light)
+    save(s, "floor_" + name, (16, 8))
+
+
+def flat_tile(name, color, edge):
+    s = canvas(32, 16)
+    s.polygon([(16, 0), (31, 7), (16, 15), (0, 7)], edge)
+    s.polygon([(16, 1), (29, 7), (16, 13), (2, 7)], color)
+    save(s, "floor_" + name, (16, 8))
+
+
 desk(False); desk(True)
 rack(False); rack(True)
 plant(); cooler()
 alert("alert", "#feae34", "#fee761")
 alert("alert_high", "#b55088", "#f6757a")
 alert("alert_urgent", "#e43b44", "#f77622")
-for k, (d, l) in FLOORS.items():
-    tile(k, d, l)
+conference_table(); vending(); fridge(); counter(); kitchen_table()
+filing(); copier(); reception(); sofa()
+carpet_tile("carpete", "#5a6988", "#8b9bb4", "#3a4466")        # área de vendas
+carpet_tile("gerente", "#68386c", "#b55088", "#3e2731")        # sala do gerente
+carpet_tile("reuniao", "#3a4466", "#5a6988", "#262b44")        # sala de reunião
+carpet_tile("anexo", "#265c42", "#3e8948", "#193c3e")          # contabilidade
+carpet_tile("rh", "#b86f50", "#e4a672", "#733e39")
+carpet_tile("ti", "#124e89", "#0099db", "#193c3e")
+flat_tile("copa_a", "#ffffff", "#c0cbdc")                       # piso xadrez da copa
+flat_tile("copa_b", "#8b9bb4", "#5a6988")
+flat_tile("servidores", "#3a4466", "#262b44")
 
 with open(os.path.join(OUTDIR, "anchors.json"), "w") as f:
     json.dump(ANCHORS, f, indent=1)

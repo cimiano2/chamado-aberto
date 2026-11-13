@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://b2uipyxutgsa2"
-path="res://.godot/imported/floor_financeiro.png-dfe241aa294ffe0f9a50f70f2ea96c68.ctex"
+uid="uid://cbjy3l10rxx2p"
+path="res://.godot/imported/reception.png-fa0a5846dc868ce0e2d3dc14e6a735ea.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/floor_financeiro.png"
-dest_files=["res://.godot/imported/floor_financeiro.png-dfe241aa294ffe0f9a50f70f2ea96c68.ctex"]
+source_file="res://assets/sprites/reception.png"
+dest_files=["res://.godot/imported/reception.png-fa0a5846dc868ce0e2d3dc14e6a735ea.ctex"]
 
 [params]
 

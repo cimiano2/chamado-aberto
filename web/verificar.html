@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Verificar relatório</title>
+<style>
+:root{--bg:#f4f4f4;--fg:#181425;--muted:#5a6988;--ok:#3e8948;--bad:#a22633;--card:#fff}
+@media (prefers-color-scheme:dark){:root{--bg:#181425;--fg:#f4f4f4;--muted:#c0cbdc;--card:#262b44}}
+body{font-family:system-ui,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--fg);max-width:720px;margin:32px auto;padding:0 16px}
+.card{background:var(--card);border:2px solid var(--fg);border-radius:8px;padding:16px;margin:14px 0}
+.ok{color:var(--ok);font-weight:700}.bad{color:var(--bad);font-weight:700}small{color:var(--muted)}
+table{border-collapse:collapse;width:100%}td{padding:4px 6px;border-bottom:1px solid var(--muted)}
+</style></head><body>
+<h1>Verificar relatório do Chamado Aberto</h1>
+<p>Selecione um ou mais relatórios (.html) enviados pelos alunos. A página confere o código de verificação e monta o ranking. Nada é enviado para a internet.</p>
+<input type="file" id="f" accept=".html" multiple>
+<div id="out"></div>
+<script>
+const SALT = "papeis-horizonte/chamado-aberto";
+async function sha(t){const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(t));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("");}
+function canonical(d){const sum=(d.chamados||[]).reduce((a,e)=>a+Math.round(e.points),0);
+ return [d.aluno||"",d.turma||"",d.modo||"",Math.round(d.pontos||0),Number(d.nota||0).toFixed(1),Math.round(d.resolvidos||0),Math.round(d.estourados||0),Math.round(d.erros||0),Math.round(d.reinicios||0),(d.chamados||[]).length,sum,SALT].join("|");}
+function esc(s){return String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));}
+document.getElementById("f").onchange=async e=>{
+ const rows=[];
+ for(const file of e.target.files){
+  const text=await file.text();
+  const m=text.match(/<script type="application\/json" id="dados">([\s\S]*?)<\/script>/);
+  if(!m){rows.push({file:file.name,ok:false,msg:"não é um relatório do jogo"});continue;}
+  const d=JSON.parse(m[1].replace(/<\\\//g,"</"));
+  const code=(await sha(canonical(d))).slice(0,12).toUpperCase();
+  rows.push({file:file.name,d,ok:code===d.codigo});
+ }
+ rows.sort((a,b)=>(b.ok-a.ok)||((b.d?.pontos||0)-(a.d?.pontos||0)));
+ let h="<div class='card'><table><tr><td><b>#</b></td><td><b>Aluno</b></td><td><b>Turma</b></td><td><b>Pontos</b></td><td><b>Nota</b></td><td><b>Resolvidos</b></td><td><b>Situação</b></td></tr>";
+ rows.forEach((r,i)=>{h+=r.d?`<tr><td>${i+1}</td><td>${esc(r.d.aluno)}</td><td>${esc(r.d.turma||"—")}</td><td>${r.d.pontos}</td><td>${Number(r.d.nota).toFixed(1)}</td><td>${r.d.resolvidos}</td><td class="${r.ok?"ok":"bad"}">${r.ok?"autêntico":"ALTERADO"}</td></tr>`
+  :`<tr><td>—</td><td colspan="5">${esc(r.file)}</td><td class="bad">${esc(r.msg)}</td></tr>`;});
+ h+="</table><small>Ranking ordenado por pontos. Relatórios com código inválido foram editados depois de gerados.</small></div>";
+ document.getElementById("out").innerHTML=h;
+};
+</script></body></html>
