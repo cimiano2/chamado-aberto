@@ -24,6 +24,7 @@ var _swatches := {}           # chave -> Array[Button]
 var _mode_cards := {}         # modo -> PanelContainer
 var _error: Label
 var _music_btn: Button
+var _menu_music_btn: Button
 var _sfx_btn: Button
 var _popup: Control
 var _t := 0.0
@@ -225,6 +226,8 @@ func _footer() -> Control:
 	var sp := Control.new()
 	sp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	h.add_child(sp)
+	_menu_music_btn = _button("", func(): audio.set_menu_music(not audio.menu_music_on), Color("b55088"))
+	h.add_child(_menu_music_btn)
 	_music_btn = _button("", func(): audio.set_music(not audio.music_on), Color("b55088"))
 	_sfx_btn = _button("", func(): audio.set_sfx(not audio.sfx_on), Color("b55088"))
 	h.add_child(_music_btn)
@@ -321,7 +324,8 @@ func _refresh() -> void:
 		st.set_content_margin_all(12)
 		_mode_cards[key].add_theme_stylebox_override("panel", st)
 	if audio:
-		_music_btn.text = "Som ambiente: %s  (M)" % ("ligado" if audio.music_on else "desligado")
+		_menu_music_btn.text = "Música do menu: %s" % ("ligada" if audio.menu_music_on else "desligada")
+		_music_btn.text = "Ambiente: %s (M)" % ("ligado" if audio.music_on else "desligado")
 		_sfx_btn.text = "Efeitos: %s  (N)" % ("ligados" if audio.sfx_on else "desligados")
 
 

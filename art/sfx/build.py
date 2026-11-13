@@ -158,3 +158,94 @@ def ambient(seconds=30.0, fade=2.0):
 # O jogo usa a gravação assets/audio/office_ambience.ogg; a versão sintetizada fica
 # disponível como alternativa: descomente para gerar assets/sfx/ambient.wav.
 # save("ambient", ambient())
+
+
+# ---------------------------------------------------------------- música do menu (original, 8 bits, loop de 30 s)
+def menu_theme():
+    """Tema original do menu: 128 BPM, 16 compassos (A + B), Dó maior.
+    Melodia e harmonia compostas para este jogo; instrumentos no estilo de console de 8 bits."""
+    bpm = 128
+    e = 60 / bpm / 2                     # duração de uma colcheia
+    bar = e * 8
+    chords_a = [("C", ["C4", "E4", "G4"]), ("A", ["A3", "C4", "E4"]), ("F", ["F3", "A3", "C4"]), ("G", ["G3", "B3", "D4"])] * 2
+    chords_b = [("D", ["D4", "F4", "A4"]), ("G", ["G3", "B3", "D4"]), ("E", ["E4", "G4", "B4"]), ("A", ["A3", "C4", "E4"]),
+                ("F", ["F3", "A3", "C4"]), ("G", ["G3", "B3", "D4"]), ("C", ["C4", "E4", "G4"]), ("G", ["G3", "B3", "D4"])]
+    chords = chords_a + chords_b
+    roots = {"C": "C2", "A": "A1", "F": "F2", "G": "G2", "D": "D2", "E": "E2"}
+    fifths = {"C": "G2", "A": "E2", "F": "C3", "G": "D3", "D": "A2", "E": "B2"}
+    melody = [
+        # A
+        "E5 - G5 E5 C5 - D5 E5", "C5 - A4 C5 E5 - D5 C5", "A4 - C5 F5 E5 - D5 C5", "D5 - B4 G4 D5 - - -",
+        "E5 - G5 C6 B5 - G5 E5", "A5 - E5 C5 E5 - A5 G5", "F5 - A5 F5 D5 - C5 A4", "B4 - D5 G5 F5 E5 D5 -",
+        # B
+        "F5 F5 - A5 - F5 D5 -", "G5 G5 - B5 - G5 D5 -", "E5 - G5 B5 A5 G5 E5 -", "C5 - E5 A5 G5 - E5 -",
+        "A5 - G5 F5 E5 - F5 A5", "G5 - F5 E5 D5 - B4 D5", "C5 - E5 G5 C6 - G5 E5", "D5 - G4 B4 D5 - - -",
+    ]
+    total = int(SR * bar * 16)
+    out = [0.0] * total
+
+    def put(samples, at):
+        for i, v in enumerate(samples):
+            if at + i < total:
+                out[at + i] += v
+
+    def note(f, dur, kind, vol, staccato=0.85):
+        n = int(SR * dur)
+        on = int(n * staccato)
+        res = []
+        for i in range(n):
+            t = i / SR
+            env = min(1.0, t / 0.005) * (min(1.0, (on - i) / (SR * 0.02)) if i < on else 0.0)
+            res.append(vol * env * osc(kind, f, t))
+        return res
+
+    for b in range(16):
+        t0 = int(SR * bar * b)
+        name, triad = chords[b]
+        # melodia (pulso 25%), nota segura enquanto houver "-"
+        steps = melody[b].split()
+        k = 0
+        while k < 8:
+            if steps[k] == "-":
+                k += 1
+                continue
+            length = 1
+            while k + length < 8 and steps[k + length] == "-":
+                length += 1
+            put(note(freq(steps[k]), e * length, "pulse", 0.13), t0 + int(SR * e * k))
+            k += length
+        # arpejo discreto em semicolcheias (quadrada), uma oitava acima do acorde
+        for s16 in range(16):
+            tone_name = triad[s16 % 3]
+            f = freq(tone_name) * 2
+            put(note(f, e / 2, "square", 0.025, 0.6), t0 + int(SR * e / 2 * s16))
+        # baixo saltitante (triângulo): fundamental, fundamental, quinta, fundamental...
+        pattern = [roots[name], roots[name], fifths[name], roots[name], roots[name], fifths[name], roots[name], fifths[name]]
+        for k, nm in enumerate(pattern):
+            put(note(freq(nm), e, "tri", 0.30, 0.7), t0 + int(SR * e * k))
+        # bateria: bumbo nos tempos 1 e 3, caixa no 2 e 4, chimbal nas colcheias
+        rnd = random.Random(b)
+        for beat in range(4):
+            at = t0 + int(SR * e * 2 * beat)
+            if beat % 2 == 0:
+                kick = [0.45 * math.sin(2 * math.pi * (150 - 1200 * i / SR) * i / SR) * math.exp(-i / (SR * 0.05))
+                        for i in range(int(SR * 0.09))]
+                put(kick, at)
+            else:
+                put([0.16 * math.exp(-i / (SR * 0.04)) * rnd.uniform(-1, 1) for i in range(int(SR * 0.12))], at)
+        for k in range(8):
+            put([0.05 * math.exp(-i / (SR * 0.008)) * rnd.uniform(-1, 1) for i in range(int(SR * 0.03))],
+                t0 + int(SR * e * k))
+    peak = max(abs(v) for v in out)
+    return [0.8 * v / peak for v in out]
+
+
+save("menu_theme", menu_theme())
+# converte para OGG (menor) em assets/audio/ e apaga o WAV intermediário
+import shutil, subprocess
+wav = os.path.join(OUT, "menu_theme.wav")
+ogg = os.path.join(OUT, "..", "audio", "menu_theme.ogg")
+if shutil.which("ffmpeg"):
+    subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", wav, "-c:a", "libvorbis", "-q:a", "4", ogg], check=True)
+    os.remove(wav)
+    print("ogg ->", os.path.normpath(ogg))

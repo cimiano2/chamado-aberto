@@ -24,7 +24,7 @@ Jogo 2D educativo em **pixel art isométrica**, feito em **Godot 4.3**. Você é
 | `Esc` | sair do atendimento sem resolver |
 | `P` | pausa · `M` liga/desliga o som ambiente · `N` liga/desliga os efeitos |
 
-- Durante o jogo toca um **som ambiente de escritório** (gravação), que pode ser desligado separadamente dos efeitos sonoros.
+- O **menu** tem uma **música original em 8 bits** (botão "Música do menu" para desligar); durante o jogo toca um **som ambiente de escritório** (gravação). Música, ambiente e efeitos têm chaves separadas e a escolha fica salva.
 - Na tela inicial o aluno digita o **nome**, o **código da turma** e escolhe **pele, cabelo e camisa** do personagem.
 - **Treino**: expedientes seguidos, a sessão é **salva** no início de cada dia (botão *Continuar*).
 - **Avaliação**: um expediente (5 min), no fim aparece a nota e o botão **Baixar relatório**.
@@ -98,7 +98,7 @@ pip install pillow
 python3 art/technician/build.py    # técnico: 3/4 frente e costas, 4 quadros de caminhada
 python3 art/employees/build.py     # 8 funcionários sentados + cadeira
 python3 art/office/build.py        # mobília (mesas, reunião, copa, copiadora, recepção...) e pisos
-python3 art/sfx/build.py           # efeitos sonoros e som ambiente de escritório (síntese, sem samples)
+python3 art/sfx/build.py           # efeitos sonoros e música original do menu (síntese, sem samples)
 ```
 
 Regras seguidas: paleta única **endesga32**, luz do alto-esquerda, contorno de 1 px, rampas com
@@ -141,6 +141,8 @@ tests/                        testes headless, gerador de capturas e visão gera
 ```
 
 ## Créditos
+
+- Música do menu: composição original para este jogo, gerada por síntese em `art/sfx/build.py` (`menu_theme`).
 
 - Som ambiente de escritório: "ambiente escritorio ok.wav", por *freesound_community* no Pixabay
   (licença de conteúdo do Pixabay). O arquivo foi convertido para OGG, normalizado e ganhou uma

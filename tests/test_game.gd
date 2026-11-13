@@ -186,6 +186,31 @@ func _init() -> void:
 	au.queue_free()
 	au2.queue_free()
 
+	# ---- música do menu: toca só no menu e pode ser desligada
+	DirAccess.remove_absolute(Audio.PREF_PATH)
+	var am := Audio.new()
+	root.add_child(am)
+	main._audio.menu_music_on = true
+	main._show_menu()
+	await process_frame
+	check(main._audio.is_menu_music_playing(), "música original toca no menu")
+	main.start_session({"name": "Musica", "class_code": "", "skin": 0, "hair": 0, "shirt": 0}, "treino", false)
+	await process_frame
+	check(not main._audio.is_menu_music_playing(), "música do menu para quando o jogo começa")
+	main.back_to_menu()
+	await process_frame
+	check(main._audio.is_menu_music_playing(), "música volta ao retornar para o menu")
+	main._audio.set_menu_music(false)
+	check(not main._audio.is_menu_music_playing(), "botão desliga a música do menu")
+	var am2 := Audio.new()
+	root.add_child(am2)
+	check(not am2.menu_music_on, "música do menu desligada fica salva")
+	main._audio.set_menu_music(true)
+	am.queue_free()
+	am2.queue_free()
+	var mt := load("res://assets/audio/menu_theme.ogg") as AudioStream
+	check(mt != null and absf(mt.get_length() - 30.0) < 0.2, "tema do menu tem 30 s (loop de 16 compassos)")
+
 	# ---- pausa: voltar ao menu (com confirmação) e continuar depois
 	main.start_session({"name": "Pausa Teste", "class_code": "", "skin": 0, "hair": 0, "shirt": 0}, "treino", false)
 	main.tickets.score = 333

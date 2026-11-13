@@ -154,6 +154,7 @@ func _show_menu() -> void:
 	_room_labels.get_parent().visible = false     # HUD escondido enquanto o menu está aberto
 	if _audio:
 		_audio.stop_music()                          # o som ambiente toca só durante o jogo
+		_audio.play_menu_music()                     # e a música original só no menu
 	if _menu_layer:
 		_menu_layer.queue_free()
 	_menu_layer = CanvasLayer.new()
@@ -186,6 +187,7 @@ func start_session(p: Dictionary, m: String, resume: bool) -> void:
 		_menu_layer.queue_free()
 		_menu_layer = null
 	_room_labels.get_parent().visible = true
+	_audio.stop_menu_music()
 	_audio.start_music()
 	_audio.play("click")
 	state = State.PLAYING

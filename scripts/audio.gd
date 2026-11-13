@@ -11,10 +11,12 @@ const SFX := ["click", "step", "ticket", "success", "error", "expired", "combo",
 const PREF_PATH := "user://chamado_aberto_audio.cfg"
 
 var music_on := true      # som ambiente (ar-condicionado, teclados, telefone ao longe)
+var menu_music_on := true # música original do menu (assets/audio/menu_theme.ogg)
 var sfx_on := true
 var _streams := {}
 var _pool: Array[AudioStreamPlayer] = []
 var _music: AudioStreamPlayer
+var _menu_music: AudioStreamPlayer
 
 
 func _ready() -> void:
@@ -30,10 +32,17 @@ func _ready() -> void:
 	_music.stream = m
 	_music.volume_db = -2.0
 	add_child(_music)
+	_menu_music = AudioStreamPlayer.new()
+	var mm: AudioStreamOggVorbis = load("res://assets/audio/menu_theme.ogg")
+	mm.loop = true
+	_menu_music.stream = mm
+	_menu_music.volume_db = -6.0
+	add_child(_menu_music)
 	var cfg := ConfigFile.new()
 	if cfg.load(PREF_PATH) == OK:
 		music_on = cfg.get_value("audio", "ambient", true)
 		sfx_on = cfg.get_value("audio", "sfx", true)
+		menu_music_on = cfg.get_value("audio", "menu_music", true)
 
 
 func play(name: String, volume_db := 0.0) -> void:
@@ -57,6 +66,29 @@ func stop_music() -> void:
 	_music.stop()
 
 
+## Música do menu: toca enquanto o menu está aberto (se estiver ligada).
+func play_menu_music() -> void:
+	if menu_music_on and not _menu_music.playing:
+		_menu_music.play()
+
+
+func stop_menu_music() -> void:
+	_menu_music.stop()
+
+
+func set_menu_music(on: bool) -> void:
+	menu_music_on = on
+	if on:
+		_menu_music.play()
+	else:
+		_menu_music.stop()
+	_save()
+
+
+func is_menu_music_playing() -> bool:
+	return _menu_music.playing
+
+
 func set_music(on: bool) -> void:
 	music_on = on
 	if on and not _music.playing:
@@ -78,5 +110,6 @@ func _save() -> void:
 	var cfg := ConfigFile.new()
 	cfg.set_value("audio", "ambient", music_on)
 	cfg.set_value("audio", "sfx", sfx_on)
+	cfg.set_value("audio", "menu_music", menu_music_on)
 	cfg.save(PREF_PATH)
 	changed.emit()
