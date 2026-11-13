@@ -1,6 +1,7 @@
-[gd_resource type="Theme" load_steps=21 format=3]
+[gd_resource type="Theme" load_steps=22 format=3]
 
-[ext_resource type="FontFile" path="res://fonts/PixelifySans.ttf" id="1_exi4b"]
+[ext_resource type="FontFile" path="res://fonts/AtkinsonHyperlegible-Regular.ttf" id="1_exi4b"]
+[ext_resource type="FontFile" path="res://fonts/AtkinsonHyperlegible-Bold.ttf" id="2_bold"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_am5te"]
 content_margin_left = 10.0
@@ -247,6 +248,7 @@ Button/colors/font_disabled_color = Color(0.545098, 0.607843, 0.705882, 1)
 Button/colors/font_hover_color = Color(0.996078, 0.905882, 0.380392, 1)
 Button/colors/font_pressed_color = Color(0.996078, 0.682353, 0.203922, 1)
 Button/font_sizes/font_size = 18
+Button/fonts/font = ExtResource("2_bold")
 Button/styles/disabled = SubResource("StyleBoxFlat_am5te")
 Button/styles/focus = SubResource("StyleBoxEmpty_jdw5q")
 Button/styles/hover = SubResource("StyleBoxFlat_etqsr")
@@ -269,6 +271,7 @@ CheckBox/styles/normal = SubResource("StyleBoxFlat_1s0bn")
 CheckBox/styles/pressed = SubResource("StyleBoxFlat_lbwyb")
 HeadingLabel/base_type = &"Label"
 HeadingLabel/colors/font_color = Color(0.172549, 0.909804, 0.960784, 1)
+HeadingLabel/fonts/font = ExtResource("2_bold")
 HeadingLabel/font_sizes/font_size = 19
 Label/colors/font_color = Color(1, 1, 1, 1)
 Modal/base_type = &"PanelContainer"
@@ -288,6 +291,7 @@ PrimaryButton/styles/pressed = SubResource("StyleBoxFlat_sf217")
 ProgressBar/styles/background = SubResource("StyleBoxFlat_h25lq")
 ProgressBar/styles/fill = SubResource("StyleBoxFlat_b1wt8")
 RichTextLabel/colors/default_color = Color(1, 1, 1, 1)
+RichTextLabel/fonts/bold_font = ExtResource("2_bold")
 StatValue/base_type = &"Label"
 StatValue/colors/font_color = Color(0.996078, 0.682353, 0.203922, 1)
 StatValue/font_sizes/font_size = 26

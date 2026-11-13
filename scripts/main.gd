@@ -4,7 +4,11 @@ extends Node
 
 enum State { TITLE, PLAYING, TASK, PAUSED, DAY_END, FINAL }
 
-const VIEW_SCALE := 2.0          # o mundo (640x360) é ampliado 2x
+## Ampliação do mundo (cada pixel da arte vira view_scale x view_scale pixels da tela).
+## Sempre inteira, e a interface também usa escala inteira (scale_mode="integer"):
+## escala fracionada deixa pixels de larguras diferentes, que "tremem" ao rolar e
+## deixam a fonte pixelada ilegível.
+var view_scale := 2
 const TECH_LINES := ["Deixa comigo!", "Bora resolver isso.", "Vamos ver o que houve...", "Já estou aqui!"]
 const THANKS := ["Valeu! Salvou meu dia!", "Funcionou! Obrigado(a)!", "Ufa! Muito obrigado(a)!", "Você é o(a) melhor!"]
 const ANGRY := ["Vou reclamar com o gerente!", "Ninguém veio me ajudar...", "Assim não dá!"]
@@ -70,6 +74,8 @@ var _step_t := 0.0
 func _ready() -> void:
 	# processa DEPOIS do técnico: a câmera usa a posição já atualizada neste quadro
 	process_priority = 100
+	get_window().size_changed.connect(_fit_window)
+	_fit_window()
 	_player.map = _map
 	_map.player = _player
 	_cam_bounds = _map.iso_bounds()
@@ -107,7 +113,9 @@ func _ready() -> void:
 	_pause_button.add_theme_font_size_override("font_size", 16)
 	_room_labels.get_parent().add_child(_pause_button)
 	_pause_button.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
-	_pause_button.position = Vector2(16, 720 - 60)
+	_pause_button.offset_left = 16
+	_pause_button.offset_top = -60
+	_pause_button.offset_bottom = -22
 	_pause_button.pressed.connect(func():
 		if state == State.PLAYING:
 			_show_pause()
@@ -237,7 +245,7 @@ func _process(delta: float) -> void:
 ## Câmera sem tremer: travada no pixel exato do técnico (sem suavização nem frações).
 func _update_camera() -> void:
 	var r := OfficeMap.iso(_player.position, 18)
-	var half := Vector2(320, 180)
+	var half := Vector2(_world_view.get_child(0).size / 2)
 	r.x = clampf(r.x, _cam_bounds.position.x + half.x, maxf(_cam_bounds.position.x + half.x, _cam_bounds.end.x - half.x))
 	r.y = clampf(r.y, _cam_bounds.position.y + half.y, maxf(_cam_bounds.position.y + half.y, _cam_bounds.end.y - half.y))
 	r = r.round()
@@ -256,7 +264,37 @@ func _update_camera() -> void:
 
 ## Ponto do canvas isométrico (640x360) → posição na tela cheia.
 func _to_screen(p: Vector2) -> Vector2:
-	return (p - _cam_f) * VIEW_SCALE + get_viewport().get_visible_rect().size / 2.0
+	return _world_view.get_global_transform() * ((p - _cam_f) * view_scale + _world_view.size / 2.0)
+
+
+## A interface ocupa a tela toda (base 1280x720, escala livre) com fonte comum suavizada,
+## legível em qualquer escala. O mundo em pixel art usa escala sempre inteira (_fit_world).
+func _fit_window() -> void:
+	_fit_world.call_deferred()
+
+
+## Ajusta o mundo ao tamanho da janela com ampliação inteira: ~360 linhas de arte visíveis
+## (2x até 900 px de altura, 3x em 1080p...). O quadro do mundo tem tamanho par em pixels
+## de arte e fica centrado em posição inteira, então a câmera cai sempre num pixel exato.
+func _fit_world() -> void:
+	var ui := get_viewport().get_final_transform()
+	var k := ui.get_scale()                       # pixels da tela por unidade da interface
+	var phys := Vector2(get_window().size)        # pixels reais da janela
+	view_scale = clampi(roundi(phys.y / 360.0), 2, 8)
+	_world_view.stretch_shrink = view_scale
+	var px := Vector2i.ZERO
+	for axis in 2:
+		var n := int(ceil(phys[axis] / view_scale)) + 2
+		n += n % 2    # par: o centro do quadro (onde fica a câmera) cai num pixel inteiro
+		px[axis] = n
+	var total := Vector2(px * view_scale)
+	# o quadro do mundo desfaz a escala da interface: 1 unidade dele = 1 pixel real da tela,
+	# e o canto dele cai num pixel inteiro
+	var corner_phys := ((phys - total) / 2.0).floor()
+	_world_view.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	_world_view.scale = Vector2(1.0 / k.x, 1.0 / k.y)
+	_world_view.size = total
+	_world_view.position = ui.affine_inverse() * corner_phys
 
 
 func _player_head() -> Vector2:
@@ -533,7 +571,7 @@ func _on_ticket_resolved(t: Dictionary, pts: int) -> void:
 func _on_ticket_expired(t: Dictionary) -> void:
 	_audio.play("expired")
 	_balloons.say(t.employee, ANGRY[t.id % ANGRY.size()], _map.speaker_point.bind(t.desk), Color("a22633"))
-	_show_toast("Prazo estourado! Chamado #%d de %s (−50 pontos)." % [t.id, t.employee], Color("ff5a5a"))
+	_show_toast("Prazo estourado! Chamado #%d de %s (−%d pontos)." % [t.id, t.employee, TicketSystem.EXPIRED_PENALTY], Color("ff5a5a"))
 
 
 func _on_day_ended() -> void:

@@ -58,15 +58,16 @@ func _init() -> void:
 		var ls: Array[Vector2] = []
 		for i in 30:
 			await process_frame
-			var off := view.position + Vector2(4, 4)
-			ps.append((Vector2(OfficeMap.iso(player.position)) - cam.position) * 2.0 + off)
-			ls.append((Vector2(OfficeMap.iso(landmark)) - cam.position) * 2.0 + off)
+			var k: float = main.view_scale
+			var c := view.position + view.size / 2.0
+			ps.append((Vector2(OfficeMap.iso(player.position)) - cam.position) * k + c)
+			ls.append((Vector2(OfficeMap.iso(landmark)) - cam.position) * k + c)
 		_key(dir, false)
 		await process_frame
 		var axis := 0 if dir == KEY_RIGHT else 1
 		var name: String = {KEY_RIGHT: "direita", KEY_DOWN: "baixo", KEY_UP: "cima"}[dir]
 		check(_reversals(ps, axis) == 0, "%s: técnico anda na tela sem ir-e-voltar" % name)
 		check(_reversals(ls, axis) == 0, "%s: cenário rola sem ir-e-voltar" % name)
-		check(_max_step_jump(ps, ls, axis) <= 2.01, "%s: passos regulares (variação máx. %.1f px)" % [name, _max_step_jump(ps, ls, axis)])
+		check(_max_step_jump(ps, ls, axis) <= main.view_scale + 0.01, "%s: passos regulares (variação máx. %.1f px)" % [name, _max_step_jump(ps, ls, axis)])
 	print("\n%s" % ("TODOS OS TESTES PASSARAM" if failures == 0 else "%d FALHA(S)" % failures))
 	quit(1 if failures > 0 else 0)

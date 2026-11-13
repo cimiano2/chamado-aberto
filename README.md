@@ -38,9 +38,9 @@ Jogo 2D educativo em **pixel art isométrica**, feito em **Godot 4.3**. Você é
 | Chamado resolvido | 100 |
 | Rapidez | até +100 (proporcional ao prazo que sobrou) |
 | Chamado da Gerência | +50 |
-| Cada erro no atendimento | −25 |
+| Cada erro no atendimento | −10 |
 | Sequência sem erros | multiplica ×1,1 … ×1,5 |
-| Prazo estourado | −50 |
+| Prazo estourado | −20 |
 
 **Nota de 0 a 10** = 40% taxa de resolução + 40% precisão (resolvidos sem erro) + 20% agilidade.
 
@@ -86,6 +86,7 @@ godot --headless --fixed-fps 60 --path . -s tests/test_camera.gd
 - `test_logic.gd`: política de senha e consistência dos dados dos chamados.
 - `test_game.gd`: confere o cenário (nada fora das salas, portas livres, toda mesa alcançável), abre cada tipo de chamado e o resolve **pelo teclado**, inclusive com um erro proposital; testa fim do dia e fim de jogo.
 - `test_camera.gd`: segura as setas e mede, quadro a quadro, que o técnico fica fixo na tela e o cenário rola sem tremer.
+- `scale_check.gd` (com janela): captura menu e jogo em várias resoluções (1366x768, 1920x1080...).
 - `profile.gd` (com janela): anda pelo escritório e mostra FPS, tempo de desenho e *draw calls*.
 
 **Desempenho:** piso e paredes do fundo ficam numa camada estática (desenhada uma vez), e todos os sprites do mundo vêm de um único atlas, então a placa de vídeo desenha o andar inteiro em ~30 chamadas por quadro.
@@ -106,8 +107,10 @@ python3 art/atlas/build.py         # junta os sprites do mundo em atlas.png (rod
 ```
 
 Regras seguidas: paleta única **endesga32**, luz do alto-esquerda, contorno de 1 px, rampas com
-deslocamento de matiz, sem pixels soltos e escala sempre inteira (o mundo é renderizado em
-640×360 e ampliado 2× com filtro *nearest*). A mobília é gerada a partir da pegada em unidades
+deslocamento de matiz, sem pixels soltos e escala sempre inteira: o mundo é ampliado 2×, 3×, 4×...
+conforme a altura da tela, medida em pixels reais, com filtro *nearest*. Assim o cenário não treme ao
+rolar em nenhuma resolução (1366×768, 1920×1080, zoom de 125% do Windows...). A interface usa
+fonte comum suavizada, legível em qualquer escala. A mobília é gerada a partir da pegada em unidades
 de mundo, então o desenho bate com a colisão.
 
 | Técnico | Funcionários |
@@ -139,7 +142,7 @@ scripts/tasks/task_*.gd       os seis minijogos
 art/                          scripts que geram a pixel art (fonte dos sprites)
 assets/sprites/               sprites gerados
 resources/theme.tres          tema da interface (pixel)
-fonts/                        Pixelify Sans (licença OFL)
+fonts/                        Atkinson Hyperlegible (textos) e Pixelify Sans (logotipo), licença OFL
 assets/audio/                 som ambiente de escritório (ver Créditos)
 tests/                        testes headless, gerador de capturas e visão geral do andar (overview.gd)
 ```
@@ -151,5 +154,6 @@ tests/                        testes headless, gerador de capturas e visão gera
 - Som ambiente de escritório: "ambiente escritorio ok.wav", por *freesound_community* no Pixabay
   (licença de conteúdo do Pixabay). O arquivo foi convertido para OGG, normalizado e ganhou uma
   emenda em crossfade para tocar em loop.
-- Fonte Pixelify Sans: licença SIL Open Font License (fonts/OFL-PixelifySans.txt).
+- Fonte dos textos: Atkinson Hyperlegible (Braille Institute), feita para leitura fácil; licença SIL OFL (fonts/OFL-AtkinsonHyperlegible.txt).
+- Fonte do logotipo: Pixelify Sans, licença SIL Open Font License (fonts/OFL-PixelifySans.txt).
 - Biblioteca de pixel art: pixel-art-studio (MIT, art/_lib/).

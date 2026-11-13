@@ -98,6 +98,7 @@ func _header() -> Control:
 	v.add_theme_constant_override("separation", 0)
 	h.add_child(v)
 	var title := _label("CHAMADO ABERTO", 46, C_CYAN)
+	title.add_theme_font_override("font", load("res://fonts/PixelifySans.ttf"))   # logotipo em pixel art
 	title.add_theme_color_override("font_shadow_color", Color("124e89"))
 	title.add_theme_constant_override("shadow_offset_x", 4)
 	title.add_theme_constant_override("shadow_offset_y", 4)
@@ -410,7 +411,7 @@ se ele estourar, a satisfação dos usuários cai e você perde pontos.
 
 [color=#2ce8f5]Pontos[/color]
 • 100 por chamado resolvido  · até +100 se for rápido  · +50 se for da Gerência
-• −25 por erro  · prazo estourado: −50
+• −10 por erro  · prazo estourado: −20
 • resolver vários seguidos sem errar multiplica os pontos (até ×1,5)
 
 [color=#2ce8f5]Nota (0 a 10)[/color]: 40% chamados resolvidos + 40% resolvidos sem erro + 20% rapidez.""")

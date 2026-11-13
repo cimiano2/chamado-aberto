@@ -142,10 +142,10 @@ func _init() -> void:
 	var tsp := TicketSystem.new(map.desks, 1)
 	var fast := {"sla_left": 90.0, "sla_total": 90.0, "priority": false}
 	check(tsp.points_for(fast, 0) == 200, "chamado resolvido na hora vale 200")
-	check(tsp.points_for({"sla_left": 45.0, "sla_total": 90.0, "priority": true}, 1) == 175, "metade do prazo + prioridade − 1 erro = 175")
+	check(tsp.points_for({"sla_left": 45.0, "sla_total": 90.0, "priority": true}, 1) == 190, "metade do prazo + prioridade − 1 erro = 190")
 	tsp.combo = 3
 	check(tsp.points_for(fast, 0) == 260, "sequência de 3 sem erro multiplica por 1,3")
-	check(tsp.points_for(fast, 2) == 150, "erro zera o multiplicador")
+	check(tsp.points_for(fast, 2) == 180, "erro zera o multiplicador (200 − 2×10)")
 
 	# ---- relatório: código confere e adulteração é detectada
 	var rep_ts := TicketSystem.new(map.desks, 5)

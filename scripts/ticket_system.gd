@@ -123,10 +123,10 @@ func update(delta: float) -> void:
 			expired += 1
 			day_expired += 1
 			satisfaction -= 12.0 if t.priority else 8.0
-			score = maxi(0, score - 50)
+			score = maxi(0, score - EXPIRED_PENALTY)
 			combo = 0
 			_stat(t.kind).expired += 1
-			_log(t, "estourado", 0, -50)
+			_log(t, "estourado", 0, -EXPIRED_PENALTY)
 			ticket_expired.emit(t)
 	satisfaction = clampf(satisfaction, 0.0, 100.0)
 	if satisfaction <= 0.0:
@@ -242,10 +242,14 @@ func resolve(id: int, task_mistakes: int) -> int:
 	return pts
 
 
-## Pontos: base 100 + rapidez (até 100) + prioridade (50) − 25 por erro, × sequência sem erros.
+## Penalidades (leves: o foco é aprender, não punir).
+const MISTAKE_PENALTY := 10     # por erro dentro do atendimento
+const EXPIRED_PENALTY := 20     # chamado que estourou o prazo
+
+## Pontos: base 100 + rapidez (até 100) + prioridade (50) − 10 por erro, × sequência sem erros.
 func points_for(t: Dictionary, task_mistakes: int) -> int:
 	var speed := int(round(100.0 * clampf(t.sla_left / t.sla_total, 0.0, 1.0)))
-	var base := 100 + speed + (50 if t.priority else 0) - 25 * task_mistakes
+	var base := 100 + speed + (50 if t.priority else 0) - MISTAKE_PENALTY * task_mistakes
 	var mult := multiplier_after(task_mistakes)
 	return maxi(20, int(round(base * mult)))
 
