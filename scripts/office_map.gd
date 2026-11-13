@@ -47,38 +47,22 @@ var player_flip := false
 var player_frame := 0
 
 var _time := 0.0
-var _static: Node2D
+var _static: Node2D          # pisos + paredes do fundo (desenhado uma vez)
+var _front: Node2D           # bordas da frente (desenhado uma vez, por cima dos objetos)
+var _sorted_walls: Array = []  # divisórias e vidro: ordenados junto com os móveis
 
 const NAMES := ["Ana", "Bruno", "Carla", "Diego", "Elisa", "Fábio", "Gabi", "Heitor", "Iara",
 	"João", "Kátia", "Leo", "Marina", "Nina", "Otávio", "Paula", "Rafa", "Sofia"]
 
 # ---------------------------------------------------------------- sprites (gerados por art/*/build.py)
-const TEX_EMPLOYEES := preload("res://assets/sprites/employees.png")
-const TEX_CHAIR := preload("res://assets/sprites/chair.png")
-const TEX := {
-	"desk": preload("res://assets/sprites/desk.png"),
-	"desk_alert": preload("res://assets/sprites/desk_alert.png"),
-	"rack": preload("res://assets/sprites/rack.png"),
-	"rack_alert": preload("res://assets/sprites/rack_alert.png"),
-	"plant": preload("res://assets/sprites/plant.png"),
-	"cooler": preload("res://assets/sprites/cooler.png"),
-	"alert": preload("res://assets/sprites/alert.png"),
-	"alert_high": preload("res://assets/sprites/alert_high.png"),
-	"alert_urgent": preload("res://assets/sprites/alert_urgent.png"),
-	"conference_table": preload("res://assets/sprites/conference_table.png"),
-	"vending": preload("res://assets/sprites/vending.png"),
-	"fridge": preload("res://assets/sprites/fridge.png"),
-	"counter": preload("res://assets/sprites/counter.png"),
-	"kitchen_table": preload("res://assets/sprites/kitchen_table.png"),
-	"filing": preload("res://assets/sprites/filing.png"),
-	"copier": preload("res://assets/sprites/copier.png"),
-	"reception": preload("res://assets/sprites/reception.png"),
-	"sofa": preload("res://assets/sprites/sofa.png"),
-	"workbench": preload("res://assets/sprites/workbench.png"),
-	"shelf": preload("res://assets/sprites/shelf.png"),
-	"ups": preload("res://assets/sprites/ups.png"),
-}
 var ANCHOR := {}      # lido de assets/sprites/anchors.json
+## Todos os sprites do mundo vêm de UM atlas (assets/sprites/atlas.png, gerado por art/atlas/build.py):
+## com uma só textura, a placa de vídeo junta piso, paredes e móveis em poucas chamadas de desenho.
+const ATLAS := preload("res://assets/sprites/atlas.png")
+var TEX := {}         # nome -> AtlasTexture (recorte do atlas)
+var FLOOR_TEX := {}   # "carpete" -> recorte de floor_carpete, etc.
+var TEX_EMPLOYEES: Texture2D
+var TEX_CHAIR: Texture2D
 ## Pegada (mundo) de cada móvel, usada na colisão.
 const FOOT := {
 	"desk": Vector2(160, 60), "rack": Vector2(100, 110), "plant": Vector2(32, 32), "cooler": Vector2(28, 28),
@@ -86,18 +70,6 @@ const FOOT := {
 	"counter": Vector2(192, 48), "kitchen_table": Vector2(72, 72), "filing": Vector2(40, 32),
 	"copier": Vector2(72, 52), "reception": Vector2(192, 56), "sofa": Vector2(128, 48),
 	"workbench": Vector2(160, 56), "shelf": Vector2(96, 32), "ups": Vector2(40, 48),
-}
-const FLOOR_TEX := {
-	"carpete": preload("res://assets/sprites/floor_carpete.png"),
-	"gerente": preload("res://assets/sprites/floor_gerente.png"),
-	"reuniao": preload("res://assets/sprites/floor_reuniao.png"),
-	"anexo": preload("res://assets/sprites/floor_anexo.png"),
-	"rh": preload("res://assets/sprites/floor_rh.png"),
-	"ti": preload("res://assets/sprites/floor_ti.png"),
-	"copa_a": preload("res://assets/sprites/floor_copa_a.png"),
-	"copa_b": preload("res://assets/sprites/floor_copa_b.png"),
-	"servidores": preload("res://assets/sprites/floor_servidores.png"),
-	"corredor": preload("res://assets/sprites/floor_corredor.png"),
 }
 const C_OUT := Color("181425")
 const WALL_TOP := Color("ead4aa")
@@ -118,6 +90,7 @@ static func tile_rect(t: Rect2i) -> Rect2:
 
 
 func _ready() -> void:
+	load_atlas()
 	var f := FileAccess.open("res://assets/sprites/anchors.json", FileAccess.READ)
 	if f:
 		var data: Dictionary = JSON.parse_string(f.get_as_text())
@@ -128,6 +101,23 @@ func _ready() -> void:
 	_static.show_behind_parent = true
 	_static.draw.connect(_draw_static)
 	add_child(_static)
+	_front = Node2D.new()
+	_front.draw.connect(_draw_front)
+	add_child(_front)
+
+
+func load_atlas() -> void:
+	var rects: Dictionary = JSON.parse_string(FileAccess.open("res://assets/sprites/atlas.json", FileAccess.READ).get_as_text())
+	for name in rects:
+		var r: Array = rects[name]
+		var t := AtlasTexture.new()
+		t.atlas = ATLAS
+		t.region = Rect2(r[0], r[1], r[2], r[3])
+		TEX[name] = t
+		if name.begins_with("floor_"):
+			FLOOR_TEX[name.substr(6)] = t
+	TEX_EMPLOYEES = TEX["employees"]
+	TEX_CHAIR = TEX["chair"]
 
 
 func room_rect(name: String) -> Rect2:
@@ -276,7 +266,23 @@ func _build_walls() -> void:
 				for span in GLASS_ROWS[ty]:
 					if tx >= span[0] and tx <= span[1]:
 						kind = "glass"
-			walls.append({"rect": Rect2(tx * TILE, ty * TILE, TILE, TILE), "kind": kind})
+			walls.append({"rect": Rect2(tx * TILE, ty * TILE, TILE, TILE), "kind": kind,
+				"sprite": _wall_sprite(kind, tx, ty)})
+
+
+func _wall_sprite(kind: String, tx: int, ty: int) -> String:
+	match kind:
+		"back":
+			if ty == 0 and tx > 0 and tx < COLS - 1 and tx % 2 == 1:
+				return "wall_back_win_s"      # janela com persiana na parede norte
+			if tx == 0 and ty > 0 and ty < ROWS - 1 and ty % 2 == 1:
+				return "wall_back_win_e"      # janela na parede oeste
+			return "wall_back"
+		"front":
+			return "wall_front"
+		"glass":
+			return "wall_glass"
+	return "wall_low"
 
 
 ## Mantido para os testes: paredes altas só no fundo do andar.
@@ -333,17 +339,36 @@ func _process(delta: float) -> void:
 	queue_redraw()
 
 
-# ================================================================ camada estática (pisos)
+# ================================================================ camadas estáticas
+# Desenhadas uma única vez (não a cada quadro) e com sprites iguais em sequência,
+# para a placa de vídeo juntar tudo em poucas chamadas de desenho.
 
 func _draw_static() -> void:
 	var ci := _static
+	# pisos agrupados por textura
+	var by_tex := {}
 	for r in rooms:
-		_draw_tiles(ci, r.rect, r.floor)
+		_collect_tiles(by_tex, r.rect, r.floor)
 	for d in doors:
-		_draw_tiles(ci, d, "carpete")
+		_collect_tiles(by_tex, d, "carpete")
+	for key in by_tex:
+		var tex: Texture2D = FLOOR_TEX[key]
+		for pos in by_tex[key]:
+			ci.draw_texture(tex, pos)
+	# paredes do fundo, de trás para frente
+	var back := walls.filter(func(w): return w.kind == "back")
+	back.sort_custom(func(a, b): return _wall_key(a) < _wall_key(b))
+	for w in back:
+		_draw_wall_on(ci, w)
 
 
-func _draw_tiles(ci: CanvasItem, r: Rect2, floor: String) -> void:
+func _draw_front() -> void:
+	for w in walls:
+		if w.kind == "front":
+			_draw_wall_on(_front, w)
+
+
+func _collect_tiles(by_tex: Dictionary, r: Rect2, floor: String) -> void:
 	var ty := 0
 	var y := r.position.y
 	while y < r.end.y - 1:
@@ -353,20 +378,41 @@ func _draw_tiles(ci: CanvasItem, r: Rect2, floor: String) -> void:
 			var key := floor
 			if floor == "copa":
 				key = "copa_a" if (tx + ty) % 2 == 0 else "copa_b"
-			ci.draw_texture(FLOOR_TEX[key], iso(Vector2(x + TILE / 2, y + TILE / 2)) - Vector2(16, 8))
+			if not by_tex.has(key):
+				by_tex[key] = []
+			by_tex[key].append(iso(Vector2(x + TILE / 2, y + TILE / 2)) - Vector2(16, 8))
 			x += TILE
 			tx += 1
 		y += TILE
 		ty += 1
 
 
-# ================================================================ camada dinâmica (paredes + objetos ordenados)
+func _wall_key(w: Dictionary) -> float:
+	var c: Vector2 = w.rect.get_center()
+	return c.x + c.y + 30
+
+
+func _draw_wall_on(ci: CanvasItem, w: Dictionary) -> void:
+	ci.draw_texture(TEX[w.sprite], iso(w.rect.get_center()) - ANCHOR[w.sprite])
+
+
+# ================================================================ camada dinâmica (divisórias + objetos ordenados)
+
+var draw_usec := 0          # tempo do último _draw (medição de desempenho)
+var draw_items := 0
+
 
 func _draw() -> void:
+	var t0 := Time.get_ticks_usec()
+	_draw_dynamic()
+	draw_usec = Time.get_ticks_usec() - t0
+
+
+func _draw_dynamic() -> void:
 	var items: Array = []   # [chave_de_profundidade, Callable]
 	for w in walls:
-		var r: Rect2 = w.rect
-		items.append([r.get_center().x + r.get_center().y + 30, _draw_wall.bind(w)])
+		if w.kind == "low" or w.kind == "glass":
+			items.append([_wall_key(w), _draw_wall_on.bind(self, w)])
 	for i in desks.size():
 		var d: Dictionary = desks[i]
 		var c: Vector2 = d.center
@@ -395,78 +441,11 @@ func _draw() -> void:
 	# anel pulsante no chão em volta de quem pediu ajuda (desenhado antes dos móveis)
 	for i in ticket_desks:
 		_draw_ring(i)
+	draw_items = items.size()
 	for it in items:
 		it[1].call()
 	for i in ticket_desks:
 		_draw_alert(i)
-
-
-func _draw_wall(w: Dictionary) -> void:
-	var r: Rect2 = w.rect
-	match w.kind:
-		"back":
-			_iso_box(r, H_BACK, WALL_TOP, WALL_S, WALL_E)
-			_draw_window(r)
-		"low":
-			_iso_box(r, H_LOW, WALL_TOP, WALL_S, WALL_E)
-		"front":
-			_iso_box(r, H_FRONT, WALL_TOP, WALL_S, WALL_E)
-		"glass":
-			_draw_glass(r)
-
-
-func _iso_box(r: Rect2, h: float, top: Color, left: Color, right: Color) -> void:
-	var N := r.position
-	var E := Vector2(r.end.x, r.position.y)
-	var S := r.end
-	var W := Vector2(r.position.x, r.end.y)
-	draw_colored_polygon(PackedVector2Array([iso(W), iso(S), iso(S, h), iso(W, h)]), left)
-	draw_colored_polygon(PackedVector2Array([iso(S), iso(E), iso(E, h), iso(S, h)]), right)
-	draw_colored_polygon(PackedVector2Array([iso(N, h), iso(E, h), iso(S, h), iso(W, h)]), top)
-	draw_polyline(PackedVector2Array([iso(N, h), iso(E, h), iso(S, h), iso(W, h), iso(N, h)]), C_OUT, 1.0)
-	draw_line(iso(W), iso(S), C_OUT, 1.0)
-	draw_line(iso(S), iso(E), C_OUT, 1.0)
-	draw_line(iso(S), iso(S, h), C_OUT, 1.0)
-
-
-## Janela com persiana na face voltada para dentro do andar (paredes do fundo).
-func _draw_window(r: Rect2) -> void:
-	var tx := int(r.position.x / TILE)
-	var ty := int(r.position.y / TILE)
-	var q: Array
-	if ty == 0 and tx > 0 and tx < COLS - 1 and tx % 2 == 1:
-		var a := Vector2(r.position.x + 10, r.end.y)
-		var b := Vector2(r.end.x - 10, r.end.y)
-		q = [iso(a, 14), iso(b, 14), iso(b, 46), iso(a, 46)]
-	elif tx == 0 and ty > 0 and ty < ROWS - 1 and ty % 2 == 1:
-		var a := Vector2(r.end.x, r.position.y + 10)
-		var b := Vector2(r.end.x, r.end.y - 10)
-		q = [iso(a, 14), iso(b, 14), iso(b, 46), iso(a, 46)]
-	else:
-		return
-	draw_colored_polygon(PackedVector2Array(q), Color("8fd3ff"))
-	# persiana: lâminas horizontais na metade de cima
-	for k in 5:
-		var t := 0.06 + k * 0.1
-		draw_line(q[3].lerp(q[0], t), q[2].lerp(q[1], t), Color("f4f4f4"), 1.0)
-	draw_polyline(PackedVector2Array(q + [q[0]]), C_OUT, 1.0)
-
-
-func _draw_glass(r: Rect2) -> void:
-	var W := Vector2(r.position.x, r.end.y)
-	var S := r.end
-	var N := r.position
-	var E := Vector2(r.end.x, r.position.y)
-	# rodapé baixo
-	_iso_box(r, 6.0, WALL_TOP, WALL_S, WALL_E)
-	# painel de vidro translúcido sobre o rodapé (face sul)
-	var pane := PackedVector2Array([iso(W, 6), iso(S, 6), iso(S, H_GLASS), iso(W, H_GLASS)])
-	draw_colored_polygon(pane, Color(0.75, 0.92, 1.0, 0.28))
-	draw_line(iso(W, H_GLASS), iso(S, H_GLASS), Color("5a6988"), 1.0)
-	draw_line(iso(N, H_GLASS), iso(E, H_GLASS), Color("5a6988"), 1.0)
-	draw_line(iso(S, 6), iso(S, H_GLASS), Color("5a6988"), 1.0)
-	# reflexo diagonal
-	draw_line(iso(W.lerp(S, 0.2), 12), iso(W.lerp(S, 0.45), 34), Color(1, 1, 1, 0.55), 1.0)
 
 
 func _draw_sprite(key: String, world: Vector2) -> void:

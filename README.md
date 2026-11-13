@@ -86,6 +86,9 @@ godot --headless --fixed-fps 60 --path . -s tests/test_camera.gd
 - `test_logic.gd`: política de senha e consistência dos dados dos chamados.
 - `test_game.gd`: confere o cenário (nada fora das salas, portas livres, toda mesa alcançável), abre cada tipo de chamado e o resolve **pelo teclado**, inclusive com um erro proposital; testa fim do dia e fim de jogo.
 - `test_camera.gd`: segura as setas e mede, quadro a quadro, que o técnico fica fixo na tela e o cenário rola sem tremer.
+- `profile.gd` (com janela): anda pelo escritório e mostra FPS, tempo de desenho e *draw calls*.
+
+**Desempenho:** piso e paredes do fundo ficam numa camada estática (desenhada uma vez), e todos os sprites do mundo vêm de um único atlas, então a placa de vídeo desenha o andar inteiro em ~30 chamadas por quadro.
 
 ## Pixel art
 
@@ -99,6 +102,7 @@ python3 art/technician/build.py    # técnico e técnica: 3/4 frente e costas, 4
 python3 art/employees/build.py     # 8 funcionários sentados + cadeira
 python3 art/office/build.py        # mobília (mesas, reunião, copa, copiadora, recepção...) e pisos
 python3 art/sfx/build.py           # efeitos sonoros e música original do menu (síntese, sem samples)
+python3 art/atlas/build.py         # junta os sprites do mundo em atlas.png (rode por último)
 ```
 
 Regras seguidas: paleta única **endesga32**, luz do alto-esquerda, contorno de 1 px, rampas com

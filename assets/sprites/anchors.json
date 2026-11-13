@@ -67,6 +67,30 @@
   14,
   30
  ],
+ "wall_back": [
+  19,
+  67
+ ],
+ "wall_back_win_s": [
+  19,
+  67
+ ],
+ "wall_back_win_e": [
+  19,
+  67
+ ],
+ "wall_low": [
+  19,
+  25
+ ],
+ "wall_front": [
+  19,
+  19
+ ],
+ "wall_glass": [
+  19,
+  51
+ ],
  "filing": [
   12,
   34

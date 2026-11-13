@@ -331,6 +331,45 @@ def ups():
     save(s, "ups", (ax, ay))
 
 
+# ---------------------------------------------------------------- blocos de parede (1 ladrilho = 64 x 64 mundo)
+WALL_TOP, WALL_S, WALL_E = "#ead4aa", "#e4a672", "#c28569"
+
+
+def wall_block(name, h, window=None):
+    """Bloco de parede de 1 ladrilho, altura h (px). window: 's' (face sul) ou 'e' (face leste)."""
+    s, ax, ay = auto(64, 64, h)
+    iso_box(s, ax, ay, 64, 64, h, WALL_TOP, WALL_S, WALL_E)
+    if window:
+        if window == "s":
+            q = [iso(ax, ay, -22, 32, 14), iso(ax, ay, 22, 32, 14), iso(ax, ay, 22, 32, 46), iso(ax, ay, -22, 32, 46)]
+        else:
+            q = [iso(ax, ay, 32, -22, 14), iso(ax, ay, 32, 22, 14), iso(ax, ay, 32, 22, 46), iso(ax, ay, 32, -22, 46)]
+        s.polygon(q, "#0099db")
+        for k in range(5):          # persiana
+            t = 0.06 + k * 0.1
+            a = (round(q[3][0] + (q[0][0] - q[3][0]) * t), round(q[3][1] + (q[0][1] - q[3][1]) * t))
+            b = (round(q[2][0] + (q[1][0] - q[2][0]) * t), round(q[2][1] + (q[1][1] - q[2][1]) * t))
+            s.line(a[0], a[1], b[0], b[1], "#f4f4f4")
+        for i in range(4):
+            s.line(q[i][0], q[i][1], q[(i + 1) % 4][0], q[(i + 1) % 4][1], OUT)
+    save(s, name, (ax, ay))
+
+
+def glass_block():
+    """Parede de vidro: rodapé baixo + painel translúcido (alfa) com reflexo."""
+    s, ax, ay = auto(64, 64, 40)
+    iso_box(s, ax, ay, 64, 64, 6, WALL_TOP, WALL_S, WALL_E)
+    W_ = (-32, 32); S_ = (32, 32); N_ = (-32, -32); E_ = (32, -32)
+    pane = [iso(ax, ay, *W_, 6), iso(ax, ay, *S_, 6), iso(ax, ay, *S_, 40), iso(ax, ay, *W_, 40)]
+    s.polygon(pane, (191, 235, 255, 72))
+    for a, b in ((iso(ax, ay, *W_, 40), iso(ax, ay, *S_, 40)), (iso(ax, ay, *N_, 40), iso(ax, ay, *E_, 40)),
+                 (iso(ax, ay, *S_, 6), iso(ax, ay, *S_, 40))):
+        s.line(a[0], a[1], b[0], b[1], "#5a6988")
+    r1 = iso(ax, ay, -19, 32, 12); r2 = iso(ax, ay, -3, 32, 34)
+    s.line(r1[0], r1[1], r2[0], r2[1], (255, 255, 255, 150))
+    save(s, "wall_glass", (ax, ay))
+
+
 def carpet_tile(name, dark, light, speck):
     s = canvas(32, 16)
     s.polygon([(16, 0), (31, 7), (16, 15), (0, 7)], dark)
@@ -353,6 +392,8 @@ alert("alert", "#feae34", "#fee761")
 alert("alert_high", "#b55088", "#f6757a")
 alert("alert_urgent", "#e43b44", "#f77622")
 conference_table(); vending(); fridge(); counter(); kitchen_table(); workbench(); shelf(); ups()
+wall_block("wall_back", 56); wall_block("wall_back_win_s", 56, "s"); wall_block("wall_back_win_e", 56, "e")
+wall_block("wall_low", 14); wall_block("wall_front", 8); glass_block()
 filing(); copier(); reception(); sofa()
 carpet_tile("carpete", "#5a6988", "#8b9bb4", "#3a4466")        # área de vendas
 carpet_tile("gerente", "#68386c", "#b55088", "#3e2731")        # sala do gerente
