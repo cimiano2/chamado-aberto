@@ -1,0 +1,299 @@
+[gd_scene load_steps=6 format=3 uid="uid://b1chamadomain"]
+
+[ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
+[ext_resource type="Script" path="res://scripts/office_map.gd" id="2_map"]
+[ext_resource type="Script" path="res://scripts/player.gd" id="3_player"]
+[ext_resource type="Script" path="res://scripts/guide.gd" id="4_guide"]
+[ext_resource type="Script" path="res://scripts/minimap.gd" id="5_minimap"]
+
+[node name="Main" type="Node"]
+script = ExtResource("1_main")
+
+[node name="World" type="Node2D" parent="."]
+
+[node name="OfficeMap" type="Node2D" parent="World"]
+unique_name_in_owner = true
+script = ExtResource("2_map")
+
+[node name="Player" type="Node2D" parent="World"]
+unique_name_in_owner = true
+position = Vector2(390, 1100)
+script = ExtResource("3_player")
+
+[node name="Camera2D" type="Camera2D" parent="World/Player"]
+offset = Vector2(0, -30)
+limit_left = -40
+limit_top = -40
+limit_right = 2580
+limit_bottom = 1400
+position_smoothing_enabled = true
+position_smoothing_speed = 7.0
+
+[node name="Guide" type="Node2D" parent="World"]
+unique_name_in_owner = true
+script = ExtResource("4_guide")
+
+[node name="HUD" type="CanvasLayer" parent="."]
+
+[node name="TopBar" type="PanelContainer" parent="HUD"]
+offset_left = 16.0
+offset_top = 16.0
+offset_right = 560.0
+offset_bottom = 76.0
+
+[node name="HBox" type="HBoxContainer" parent="HUD/TopBar"]
+layout_mode = 2
+theme_override_constants/separation = 22
+
+[node name="ClockBox" type="VBoxContainer" parent="HUD/TopBar/HBox"]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="DayLabel" type="Label" parent="HUD/TopBar/HBox/ClockBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"CaptionLabel"
+text = "Dia 1"
+
+[node name="ClockLabel" type="Label" parent="HUD/TopBar/HBox/ClockBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"StatValue"
+text = "09:00"
+
+[node name="ScoreBox" type="VBoxContainer" parent="HUD/TopBar/HBox"]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="Caption" type="Label" parent="HUD/TopBar/HBox/ScoreBox"]
+layout_mode = 2
+theme_type_variation = &"CaptionLabel"
+text = "PONTOS"
+
+[node name="ScoreLabel" type="Label" parent="HUD/TopBar/HBox/ScoreBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"StatValue"
+text = "0"
+
+[node name="SatBox" type="VBoxContainer" parent="HUD/TopBar/HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+
+[node name="Caption" type="Label" parent="HUD/TopBar/HBox/SatBox"]
+layout_mode = 2
+theme_type_variation = &"CaptionLabel"
+text = "SATISFAÇÃO DOS USUÁRIOS"
+
+[node name="SatisfactionBar" type="ProgressBar" parent="HUD/TopBar/HBox/SatBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 14)
+layout_mode = 2
+max_value = 1.0
+step = 0.0
+value = 1.0
+show_percentage = false
+
+[node name="TicketPanel" type="PanelContainer" parent="HUD"]
+modulate = Color(1, 1, 1, 0.92)
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -300.0
+offset_top = 16.0
+offset_right = -16.0
+offset_bottom = 60.0
+grow_horizontal = 0
+
+[node name="VBox" type="VBoxContainer" parent="HUD/TicketPanel"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Title" type="Label" parent="HUD/TicketPanel/VBox"]
+layout_mode = 2
+theme_type_variation = &"HeadingLabel"
+theme_override_font_sizes/font_size = 13
+text = "CHAMADOS ABERTOS"
+
+[node name="EmptyLabel" type="Label" parent="HUD/TicketPanel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"MutedLabel"
+text = "Nenhum chamado. Aproveite o café!"
+
+[node name="TicketList" type="VBoxContainer" parent="HUD/TicketPanel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="PromptPanel" type="PanelContainer" parent="HUD"]
+unique_name_in_owner = true
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -330.0
+offset_top = -76.0
+offset_right = 330.0
+offset_bottom = -24.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="PromptLabel" type="Label" parent="HUD/PromptPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "[E] Atender"
+horizontal_alignment = 1
+
+[node name="Minimap" type="Control" parent="HUD"]
+unique_name_in_owner = true
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -270.0
+offset_top = -160.0
+offset_right = -16.0
+offset_bottom = -16.0
+grow_horizontal = 0
+grow_vertical = 0
+mouse_filter = 2
+script = ExtResource("5_minimap")
+
+[node name="Toast" type="Label" parent="HUD"]
+unique_name_in_owner = true
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -360.0
+offset_top = 92.0
+offset_right = 360.0
+offset_bottom = 120.0
+grow_horizontal = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 18
+horizontal_alignment = 1
+
+[node name="TaskLayer" type="CanvasLayer" parent="."]
+unique_name_in_owner = true
+layer = 2
+visible = false
+
+[node name="Dim" type="ColorRect" parent="TaskLayer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.02, 0.03, 0.07, 0.8)
+
+[node name="Center" type="CenterContainer" parent="TaskLayer/Dim"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Modal" type="PanelContainer" parent="TaskLayer/Dim/Center"]
+custom_minimum_size = Vector2(860, 0)
+layout_mode = 2
+theme_type_variation = &"Modal"
+
+[node name="VBox" type="VBoxContainer" parent="TaskLayer/Dim/Center/Modal"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="TicketHeader" type="Label" parent="TaskLayer/Dim/Center/Modal/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"MutedLabel"
+text = "Chamado #1"
+
+[node name="TicketQuote" type="Label" parent="TaskLayer/Dim/Center/Modal/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.823529, 0.247059, 1)
+theme_override_font_sizes/font_size = 17
+text = "\"Meu computador está lento\""
+
+[node name="TaskTitle" type="Label" parent="TaskLayer/Dim/Center/Modal/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"TitleLabel"
+text = "Tarefa"
+
+[node name="TaskExplain" type="Label" parent="TaskLayer/Dim/Center/Modal/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(800, 0)
+layout_mode = 2
+theme_type_variation = &"MutedLabel"
+theme_override_font_sizes/font_size = 14
+autowrap_mode = 3
+
+[node name="HSeparator" type="HSeparator" parent="TaskLayer/Dim/Center/Modal/VBox"]
+layout_mode = 2
+
+[node name="TaskHolder" type="VBoxContainer" parent="TaskLayer/Dim/Center/Modal/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="TaskFeedback" type="Label" parent="TaskLayer/Dim/Center/Modal/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(800, 46)
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+autowrap_mode = 3
+
+[node name="Footer" type="Label" parent="TaskLayer/Dim/Center/Modal/VBox"]
+layout_mode = 2
+theme_type_variation = &"CaptionLabel"
+text = "Teclas 1–9 e Enter (ou mouse) · Esc: sair sem resolver (o prazo volta a correr)"
+
+[node name="Overlay" type="CanvasLayer" parent="."]
+unique_name_in_owner = true
+layer = 3
+
+[node name="Dim" type="ColorRect" parent="Overlay"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.02, 0.03, 0.07, 0.86)
+
+[node name="Center" type="CenterContainer" parent="Overlay/Dim"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Modal" type="PanelContainer" parent="Overlay/Dim/Center"]
+custom_minimum_size = Vector2(700, 0)
+layout_mode = 2
+theme_type_variation = &"Modal"
+
+[node name="VBox" type="VBoxContainer" parent="Overlay/Dim/Center/Modal"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="OverlayText" type="RichTextLabel" parent="Overlay/Dim/Center/Modal/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(650, 0)
+layout_mode = 2
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+
+[node name="OverlayButton" type="Button" parent="Overlay/Dim/Center/Modal/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+focus_mode = 0
+theme_type_variation = &"PrimaryButton"
+text = "[Enter] Começar"
