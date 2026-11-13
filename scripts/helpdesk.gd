@@ -39,22 +39,24 @@ static func password_problems(pw: String, full_name: String) -> Array[String]:
 
 
 # ====================================================================
-# Rede: cenários de diagnóstico (saída de comando → causa)
+# Hardware: sintoma → componente com defeito (conteúdo do 1º semestre)
 # ====================================================================
 
-const NETWORK := [
-	{"cause": "Cabo de rede desconectado ou solto", "fix": "Encaixar o cabo de rede (conector RJ45) até ouvir o clique.",
-	 "out": "C:\\> ipconfig\n\nAdaptador Ethernet:\n   Estado da mídia . . . : Mídia desconectada"},
-	{"cause": "Não recebeu IP do servidor DHCP", "fix": "Endereço 169.254.x.x é automático (APIPA): renovar com ipconfig /renew e checar o DHCP.",
-	 "out": "C:\\> ipconfig\n\nAdaptador Ethernet:\n   Endereço IPv4 . . . : 169.254.37.12\n   Gateway Padrão . . . :"},
-	{"cause": "Problema de DNS (nomes não resolvem)", "fix": "O IP responde, mas o nome não: corrigir o servidor DNS ou limpar o cache (ipconfig /flushdns).",
-	 "out": "C:\\> ping 8.8.8.8\nResposta de 8.8.8.8: tempo=14ms\n\nC:\\> ping google.com\nA solicitação ping não pôde encontrar o host google.com."},
-	{"cause": "Gateway configurado errado", "fix": "O gateway está fora da rede do PC: ajustar para 192.168.1.1.",
-	 "out": "C:\\> ipconfig\n   Endereço IPv4 . . . : 192.168.1.50\n   Gateway Padrão . . . : 192.168.2.1\n\nC:\\> ping 192.168.2.1\nHost de destino inacessível."},
-	{"cause": "Modo avião ligado (Wi-Fi desativado)", "fix": "Desligar o modo avião e reconectar ao Wi-Fi da empresa.",
-	 "out": "Configurações > Rede\n\n   Modo avião . . . : ATIVADO\n   Wi-Fi . . . . . . : desligado"},
-	{"cause": "IP duplicado na rede", "fix": "Dois equipamentos com o mesmo IP: deixar o PC pegar IP automático pelo DHCP.",
-	 "out": "Aviso do Windows:\n\n   Conflito de endereço IP detectado.\n   Outro dispositivo nesta rede está usando o\n   endereço IP 192.168.1.20."},
+const HARDWARE := [
+	{"part": "Memória RAM mal encaixada", "fix": "Desligar, tirar a memória, limpar os contatos com borracha e encaixar de novo até travar.",
+	 "symptom": "Liga, as ventoinhas giram, mas o PC dá vários BIPES e não aparece nada na tela."},
+	{"part": "Fonte de alimentação", "fix": "Conferir o cabo de força e a chave da fonte; se continuar, trocar a fonte.",
+	 "symptom": "Aperto o botão e não acontece NADA: nenhuma luz, nenhuma ventoinha, nenhum barulho."},
+	{"part": "Cabo de vídeo do monitor", "fix": "Encaixar firme o cabo HDMI/VGA no monitor e no PC e escolher a entrada certa no monitor.",
+	 "symptom": "O PC liga normal (luz acesa e ventoinha girando), mas o monitor diz \"Sem sinal\"."},
+	{"part": "Cooler sujo (superaquecimento)", "fix": "Limpar a poeira do cooler e das saídas de ar; conferir a pasta térmica.",
+	 "symptom": "O PC desliga sozinho depois de uns minutos e a lateral do gabinete fica muito quente."},
+	{"part": "Bateria da placa-mãe", "fix": "Trocar a bateria redonda (CR2032) da placa-mãe e acertar data e hora.",
+	 "symptom": "Toda vez que ligo, a data e a hora voltam para 01/01/2000."},
+	{"part": "HD com defeito", "fix": "Fazer backup URGENTE dos arquivos e trocar o HD (de preferência por um SSD).",
+	 "symptom": "O PC está lentíssimo para abrir arquivos e faz um barulho de \"tec... tec...\" lá dentro."},
+	{"part": "Teclado desconectado", "fix": "Reconectar o teclado na porta USB (ou trocar as pilhas, se for sem fio).",
+	 "symptom": "A tela de senha aparece, mas nenhuma tecla funciona e as luzes do teclado estão apagadas."},
 ]
 
 

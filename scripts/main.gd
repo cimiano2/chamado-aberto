@@ -408,7 +408,7 @@ func _show_title() -> void:
 Cada chamado tem um prazo. Se estourar, a satisfação cai. Chamados da [color=#ff4fa3]Diretoria[/color] têm prioridade alta: prazo menor, mais pontos.
 Enquanto você atende um chamado, o prazo [b]dele[/b] para, mas o dos outros continua correndo!
 
-[color=#8592c4]Problemas do dia a dia do suporte: internet, impressora, senha, PC lento, e-mail suspeito e cabos.[/color]"""
+[color=#8592c4]Problemas do dia a dia do suporte: hardware, impressora, senha, PC lento, e-mail suspeito e cabos.[/color]"""
 	_overlay_button.text = "[Enter] Bater o ponto (09:00)"
 	_overlay.visible = true
 

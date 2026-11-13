@@ -15,9 +15,9 @@ const MAX_OPEN := 6
 
 ## Tipos de chamado → script do minijogo e frases dos usuários (e dos alertas de servidor).
 const TYPES := {
-	"network": {"task": "res://scripts/tasks/task_network.gd", "titles": [
-		"Estou sem internet", "A rede caiu só aqui na minha mesa", "O sistema web não abre de jeito nenhum"],
-		"server_titles": ["Alerta: servidor sem resposta na rede", "Alerta: perda de conexão com o servidor"]},
+	"hardware": {"task": "res://scripts/tasks/task_hardware.gd", "titles": [
+		"Meu PC não liga direito", "O computador está apitando", "A tela fica preta e não aparece nada"],
+		"server_titles": ["Alerta: servidor desligou sozinho", "Alerta: servidor reiniciando sem parar"]},
 	"printer": {"task": "res://scripts/tasks/task_printer.gd", "titles": [
 		"A impressora não imprime", "Mandei imprimir e nada saiu", "A impressora está piscando uma luz laranja"]},
 	"password": {"task": "res://scripts/tasks/task_password.gd", "titles": [

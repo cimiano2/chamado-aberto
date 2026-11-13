@@ -15,11 +15,11 @@ const DEPT_NAMES := {"DIRETORIA": "Diretoria", "FINANCEIRO": "Financeiro", "RH":
 ## Salas alinhadas à grade (12 x 7 ladrilhos cada).
 var rooms: Array[Dictionary] = [
 	{"name": "DIRETORIA", "rect": Rect2(64, 64, 768, 448), "floor": "diretoria", "kinds": ["password", "phishing", "printer", "cables"], "priority": true},
-	{"name": "FINANCEIRO", "rect": Rect2(896, 64, 768, 448), "floor": "financeiro", "kinds": ["printer", "network", "password", "slow"], "priority": false},
+	{"name": "FINANCEIRO", "rect": Rect2(896, 64, 768, 448), "floor": "financeiro", "kinds": ["printer", "hardware", "password", "slow"], "priority": false},
 	{"name": "RH", "rect": Rect2(1728, 64, 768, 448), "floor": "rh", "kinds": ["password", "phishing", "printer", "slow"], "priority": false},
 	{"name": "SUPORTE TI", "rect": Rect2(64, 832, 768, 448), "floor": "suporte", "kinds": [], "priority": false},
-	{"name": "MARKETING", "rect": Rect2(896, 832, 768, 448), "floor": "marketing", "kinds": ["slow", "cables", "network", "phishing"], "priority": false},
-	{"name": "SERVIDORES", "rect": Rect2(1728, 832, 768, 448), "floor": "servidores", "kinds": ["network", "slow"], "priority": false},
+	{"name": "MARKETING", "rect": Rect2(896, 832, 768, 448), "floor": "marketing", "kinds": ["slow", "cables", "hardware", "phishing"], "priority": false},
+	{"name": "SERVIDORES", "rect": Rect2(1728, 832, 768, 448), "floor": "servidores", "kinds": ["hardware", "slow"], "priority": false},
 ]
 var hall := Rect2(64, 576, 2432, 192)
 var world_rect := Rect2(0, 0, 2560, 1344)
@@ -133,15 +133,19 @@ func build() -> void:
 				desks.append(d)
 	floors.append(hall)
 	floors.append_array(doors)
-	# decoração no corredor (também bloqueia)
-	for x in [320.0, 1280.0, 2240.0]:
-		var c := Vector2(x, hall.position.y + 26)
-		props.append({"kind": "plant", "center": c})
+	# decoração encostada na parede do fundo do corredor, entre as portas (também bloqueia)
+	for item in [["plant", 160.0], ["cooler", 700.0], ["plant", 1060.0], ["plant", 1500.0],
+			["cooler", 1880.0], ["plant", 2380.0]]:
+		var c := Vector2(item[1], hall.position.y + 22)
+		props.append({"kind": item[0], "center": c})
 		obstacles.append(Rect2(c - Vector2(16, 16), Vector2(32, 32)))
-	for x in [800.0, 1760.0]:
-		var c := Vector2(x, hall.end.y - 24)
-		props.append({"kind": "cooler", "center": c})
-		obstacles.append(Rect2(c - Vector2(14, 14), Vector2(28, 28)))
+	# uma planta no canto do fundo de cada sala
+	for room in rooms:
+		if room.name == "SERVIDORES":
+			continue   # ficaria escondida atrás dos racks
+		var c: Vector2 = room.rect.position + Vector2(36, 36)
+		props.append({"kind": "plant", "center": c})
+		obstacles.append(Rect2(c - Vector2(18, 18), Vector2(36, 36)))
 	_build_walls()
 
 
@@ -157,11 +161,21 @@ func _build_walls() -> void:
 			if tx < cols:
 				var c := Vector2(tx * g + g / 2, ty * g + g / 2)
 				solid = not _in_floor(c)
-			if solid and run_start < 0:
+			if solid and run_start >= 0 and tx == 1:
+				# a coluna da borda oeste fica num bloco separado (só ela é alta)
+				walls.append(Rect2(0, ty * g, g, g))
+				run_start = 1
+			elif solid and run_start < 0:
 				run_start = tx
 			elif not solid and run_start >= 0:
 				walls.append(Rect2(run_start * g, ty * g, (tx - run_start) * g, g))
 				run_start = -1
+
+
+## Paredes do fundo (borda norte e coluna oeste) são altas; as da frente são baixas
+## para nunca esconder o que está dentro das salas.
+func is_back_wall(w: Rect2) -> bool:
+	return w.position.y < 64 or (w.position.x < 64 and w.size.x <= 64)
 
 
 func _in_floor(p: Vector2) -> bool:
@@ -220,7 +234,7 @@ func _draw_static() -> void:
 	var sorted := walls.duplicate()
 	sorted.sort_custom(func(a, b): return a.get_center().x + a.get_center().y < b.get_center().x + b.get_center().y)
 	for w in sorted:
-		var high: bool = w.position.y < 64 or w.position.x < 64
+		var high := is_back_wall(w)
 		_iso_box(ci, w, WALL_HIGH if high else WALL_LOW, C_WALL_TOP, C_WALL_L, C_WALL_R)
 		if high and w.position.y < 64:
 			_draw_windows(ci, w)

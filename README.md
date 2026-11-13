@@ -1,8 +1,14 @@
 # Chamado Aberto
 
-Jogo 2D educativo em **pixel art isométrica**, feito em **Godot 4.3**. Você é o **técnico de TI** do 7º andar de uma grande empresa: anda pelo escritório **com o teclado**, chega nas mesas com chamado aberto e resolve o problema antes que o prazo (SLA) estoure. Os problemas são os do **dia a dia de um técnico de suporte**.
+Jogo 2D educativo em **pixel art isométrica**, feito em **Godot 4.3**. Você é o **técnico de TI** do 7º andar de uma grande empresa: anda pelo escritório **com o teclado**, chega nas mesas com chamado aberto e resolve o problema antes que o prazo (SLA) estoure. Os problemas são os do **dia a dia de um técnico de suporte**, no nível do 1º semestre do curso técnico em informática.
 
 ![Escritório](docs/jogo.png)
+
+<details><summary>Mapa do andar inteiro</summary>
+
+![Andar](docs/andar.png)
+
+</details>
 
 ## Como jogar
 
@@ -27,7 +33,7 @@ Jogo 2D educativo em **pixel art isométrica**, feito em **Godot 4.3**. Você é
 
 | O usuário diz | Minijogo | O que se aprende |
 |---|---|---|
-| "Estou sem internet" | ler a saída do `ipconfig`/`ping` e apontar a causa | cabo solto, DHCP (169.254.x.x), DNS, gateway, modo avião, IP duplicado |
+| "Meu PC não liga direito" | ler o sintoma e descobrir a peça com defeito | memória RAM, fonte, cabo de vídeo, cooler, bateria da placa-mãe, HD, teclado |
 | "A impressora não imprime" | ler o painel e aplicar só o que resolve | papel atolado, sem papel, toner, offline, fila travada |
 | "Esqueci minha senha" | confirmar a identidade e escolher uma senha válida | política de senha forte e boas práticas de segurança |
 | "Meu PC está lento" | Gerenciador de Tarefas: finalizar só o que pesa | não fechar processos do Windows nem o antivírus |
@@ -51,7 +57,7 @@ godot --headless --path . -s tests/test_camera.gd
 ```
 
 - `test_logic.gd`: política de senha e consistência dos dados dos chamados.
-- `test_game.gd`: abre cada tipo de chamado e o resolve **pelo teclado**, inclusive com um erro proposital; testa fim do dia e fim de jogo.
+- `test_game.gd`: confere o cenário (nada fora das salas, portas livres, toda mesa alcançável), abre cada tipo de chamado e o resolve **pelo teclado**, inclusive com um erro proposital; testa fim do dia e fim de jogo.
 - `test_camera.gd`: segura as setas e mede, quadro a quadro, que o técnico fica fixo na tela e o cenário rola sem tremer.
 
 ## Pixel art
@@ -95,5 +101,5 @@ art/                          scripts que geram a pixel art (fonte dos sprites)
 assets/sprites/               sprites gerados
 resources/theme.tres          tema da interface (pixel)
 fonts/                        Pixelify Sans (licença OFL)
-tests/                        testes headless e gerador de capturas
+tests/                        testes headless, gerador de capturas e visão geral do andar (overview.gd)
 ```

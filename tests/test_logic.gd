@@ -28,11 +28,11 @@ func _init() -> void:
 	check(Helpdesk.password_problems("souzaFarol9!", name).has("contém o nome do usuário (\"souza\")"), "detecta sobrenome dentro da senha")
 
 	# --- dados dos chamados são consistentes
-	var causes := {}
-	for s in Helpdesk.NETWORK:
-		causes[s.cause] = true
-		check(s.out != "" and s.fix != "", "rede: cenário '%s' tem saída e solução" % s.cause)
-	check(causes.size() == Helpdesk.NETWORK.size() and causes.size() >= 4, "rede: causas distintas (precisa de 4 opções)")
+	var parts := {}
+	for s in Helpdesk.HARDWARE:
+		parts[s.part] = true
+		check(s.symptom != "" and s.fix != "", "hardware: caso '%s' tem sintoma e solução" % s.part)
+	check(parts.size() == Helpdesk.HARDWARE.size() and parts.size() >= 4, "hardware: peças distintas (precisa de 4 opções)")
 	check(Helpdesk.EMAILS.filter(func(e): return e.phish).size() >= 2 and Helpdesk.EMAILS.filter(func(e): return not e.phish).size() >= 1, "e-mails: há golpes e legítimos suficientes")
 	for e in Helpdesk.EMAILS:
 		if e.phish:

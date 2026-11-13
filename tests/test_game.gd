@@ -29,6 +29,48 @@ func _init() -> void:
 	check(map.is_walkable(Rect2(OfficeMap.START + Player.FEET.position, Player.FEET.size)), "posição inicial caminhável")
 	check(not map.is_walkable(Rect2(Vector2(850, 300), Vector2(28, 14))), "parede entre salas bloqueia")
 
+	# ---- cenário: objetos dentro do piso, portas livres, mesas alcançáveis
+	var outside := []
+	for o in map.obstacles:
+		for corner in [o.position, Vector2(o.end.x, o.position.y), Vector2(o.position.x, o.end.y), o.end]:
+			if not map._in_floor(corner):
+				outside.append(o)
+				break
+	check(outside.is_empty(), "nenhum objeto fora das salas/corredor %s" % [outside])
+	var blocked_doors := []
+	for d in map.doors:
+		for o in map.obstacles:
+			if o.intersects(d.grow(8)):
+				blocked_doors.append(d)
+	check(blocked_doors.is_empty(), "nenhuma porta bloqueada %s" % [blocked_doors])
+	# parede alta só na borda norte ou como bloco único da coluna oeste
+	# (o erro antigo: uma faixa de 2560 un. na borda da frente começando em x=0 virava parede alta)
+	var bad_walls := map.walls.filter(func(w): return map.is_back_wall(w) and not (w.position.y < 64 or (w.position.x < 64 and w.size.x <= 64)))
+	var front_tall := map.walls.filter(func(w): return map.is_back_wall(w) and w.position.y >= map.world_rect.end.y - 64 and w.size.x > 64)
+	check(bad_walls.is_empty() and front_tall.is_empty(), "parede alta só no fundo do andar (nenhuma na frente)")
+	# busca em largura numa grade de 16 un. a partir da sala do suporte
+	var step := 16.0
+	var seen := {}
+	var queue: Array[Vector2] = [OfficeMap.START.snapped(Vector2(step, step))]
+	seen[queue[0]] = true
+	while not queue.is_empty():
+		var p: Vector2 = queue.pop_back()
+		for dv in [Vector2(step, 0), Vector2(-step, 0), Vector2(0, step), Vector2(0, -step)]:
+			var q: Vector2 = p + dv
+			if not seen.has(q) and map.is_walkable(Rect2(q + Player.FEET.position, Player.FEET.size)):
+				seen[q] = true
+				queue.append(q)
+	var unreachable := []
+	for d in map.desks:
+		var ok := false
+		for k in seen:
+			if k.distance_to(d.pos) < 60.0:
+				ok = true
+				break
+		if not ok:
+			unreachable.append(d.employee)
+	check(unreachable.is_empty(), "todas as %d mesas com chamado são alcançáveis %s" % [map.desks.size(), unreachable])
+
 	# ---- sistema de chamados
 	var ts: TicketSystem = main.tickets
 	main._on_overlay_action()   # sai da tela de título
@@ -98,10 +140,10 @@ func _key(task: TaskBase, n: int) -> void:
 ## Resolve o minijogo apertando as teclas, com um erro proposital antes da resposta certa.
 func _solve(task: TaskBase, kind: String) -> bool:
 	match kind:
-		"network":
+		"hardware":
 			var first := true
 			while not task.is_solved:
-				var good: int = task.options.find(task.scenario.cause)
+				var good: int = task.options.find(task.scenario.part)
 				if first:
 					_key(task, (good + 1) % 4)
 					first = false
