@@ -25,7 +25,7 @@ Jogo 2D educativo em **pixel art isométrica**, feito em **Godot 4.3**. Você é
 | `P` | pausa · `M` liga/desliga o som ambiente · `N` liga/desliga os efeitos |
 
 - O **menu** tem uma **música original em 8 bits** (botão "Música do menu" para desligar); durante o jogo toca um **som ambiente de escritório** (gravação). Música, ambiente e efeitos têm chaves separadas e a escolha fica salva.
-- Na tela inicial o aluno digita o **nome**, o **código da turma** e escolhe **pele, cabelo e camisa** do personagem.
+- Na tela inicial o aluno digita o **nome**, o **código da turma** e escolhe o **estilo (masculino ou feminino)**, **pele, cabelo e camisa** do personagem.
 - **Treino**: expedientes seguidos, a sessão é **salva** no início de cada dia (botão *Continuar*).
 - **Avaliação**: um expediente (5 min), no fim aparece a nota e o botão **Baixar relatório**.
 - Quem abre um chamado **levanta a mão e acena**, ganha um **"!" grande** sobre a cabeça e um destaque pulsante no chão; os funcionários falam em **balões**.
@@ -95,7 +95,7 @@ Cada asset tem um `build.py` que é a fonte da arte; os PNGs em `assets/sprites/
 
 ```bash
 pip install pillow
-python3 art/technician/build.py    # técnico: 3/4 frente e costas, 4 quadros de caminhada
+python3 art/technician/build.py    # técnico e técnica: 3/4 frente e costas, 4 quadros de caminhada
 python3 art/employees/build.py     # 8 funcionários sentados + cadeira
 python3 art/office/build.py        # mobília (mesas, reunião, copa, copiadora, recepção...) e pisos
 python3 art/sfx/build.py           # efeitos sonoros e música original do menu (síntese, sem samples)

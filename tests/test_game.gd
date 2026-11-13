@@ -169,6 +169,15 @@ func _init() -> void:
 			if base_img.get_pixel(x, y) != skin_img.get_pixel(x, y):
 				changed += 1
 	check(changed > 100, "skin recolore o técnico (%d pixels)" % changed)
+	var fem := Skins.image(0, 0, 0, 1)
+	var diff := 0
+	for y in fem.get_height():
+		for x in fem.get_width():
+			if fem.get_pixel(x, y) != base_img.get_pixel(x, y):
+				diff += 1
+	check(fem.get_size() == base_img.get_size() and diff > 100, "estilo feminino tem sprite próprio (%d pixels diferentes)" % diff)
+	var fem_skin := Skins.image(3, 2, 1, 1)
+	check(fem_skin.get_pixel(9, 20) != fem.get_pixel(9, 20) or fem_skin.get_pixel(10, 3) != fem.get_pixel(10, 3), "estilo feminino também aceita pele, cabelo e camisa")
 
 	# ---- áudio: música desligada por padrão, música e efeitos independentes e salvos
 	DirAccess.remove_absolute(Audio.PREF_PATH)

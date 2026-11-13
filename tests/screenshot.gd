@@ -12,6 +12,10 @@ func _init() -> void:
 	SaveGame.add_to_board("Caio Nunes", "INFO1A", "treino", 1210, 6.1)
 	var main: Node = load("res://scenes/main.tscn").instantiate()
 	root.add_child(main)
+	for i in 3: await process_frame
+	main._menu.profile.body = 1
+	main._menu.profile.hair = 2
+	main._menu._refresh()
 	for i in 8: await process_frame
 	await _shot(out + "/menu.png")
 	main._menu._show_help()
@@ -23,7 +27,7 @@ func _init() -> void:
 	await _shot(out + "/menu_placar.png")
 	main._menu._close_popup()
 
-	main.start_session({"name": "Marina Lopes", "class_code": "INFO1A", "skin": 2, "hair": 3, "shirt": 1}, "avaliacao", false)
+	main.start_session({"name": "Marina Lopes", "class_code": "INFO1A", "skin": 2, "hair": 3, "shirt": 1, "body": 1}, "avaliacao", false)
 	var ts: TicketSystem = main.tickets
 	ts.spawn_timer = 9999.0
 	var map: OfficeMap = main.get_node("%OfficeMap")

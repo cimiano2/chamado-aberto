@@ -12,7 +12,7 @@ const FINE := ["Tudo certo por aqui!", "Por enquanto tudo funcionando.", "Bom di
 
 var tickets: TicketSystem
 var state: State = State.TITLE
-var profile := {"name": "", "class_code": "", "skin": 0, "hair": 0, "shirt": 0}
+var profile := {"name": "", "class_code": "", "skin": 0, "hair": 0, "shirt": 0, "body": 0}
 var mode := "treino"             # treino | avaliacao
 var restarts := 0
 
@@ -180,7 +180,7 @@ func start_session(p: Dictionary, m: String, resume: bool) -> void:
 	else:
 		restarts = 0
 	_begin_day(tickets.day)
-	_map.player_tex = Skins.texture(profile.skin, profile.hair, profile.shirt)
+	_map.player_tex = Skins.texture(profile.skin, profile.hair, profile.shirt, int(profile.get("body", 0)))
 	_name_tag.text = profile.name
 	_name_tag.add_theme_color_override("font_color", Skins.SHIRT[profile.shirt].c[0])
 	if _menu_layer:

@@ -13,7 +13,8 @@ const C_YELLOW := Color("feae34")
 const C_MUTED := Color("c0cbdc")
 
 var audio: Audio
-var profile := {"name": "", "class_code": "", "skin": 0, "hair": 0, "shirt": 0}
+var profile := {"name": "", "class_code": "", "skin": 0, "hair": 0, "shirt": 0, "body": 0}
+var _body_buttons: Array[Button] = []
 var mode := "avaliacao"
 var _saved := {}
 var _name: LineEdit
@@ -35,6 +36,8 @@ func _ready() -> void:
 	_saved = SaveGame.load_session()
 	if _saved.has("profile"):
 		profile = _saved.profile.duplicate()
+		if not profile.has("body"):
+			profile.body = 0
 	# fundo: o escritório aparece por trás, escurecido
 	var dim := ColorRect.new()
 	dim.color = Color(0.06, 0.05, 0.12, 0.82)
@@ -107,31 +110,47 @@ func _character_card() -> Control:
 	var card := _card("1  SEU PERSONAGEM", C_CYAN)
 	var box: VBoxContainer = card.get_meta("box")
 	var stage := CenterContainer.new()
-	stage.custom_minimum_size = Vector2(0, 228)
+	stage.custom_minimum_size = Vector2(0, 176)
 	box.add_child(stage)
 	var stack := Control.new()
-	stack.custom_minimum_size = Vector2(192, 228)
+	stack.custom_minimum_size = Vector2(160, 176)
 	stage.add_child(stack)
 	var floor := TextureRect.new()
 	floor.texture = load("res://assets/sprites/floor_ti.png")
 	floor.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	floor.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	floor.size = Vector2(192, 96)
-	floor.position = Vector2(0, 132)
+	floor.size = Vector2(160, 80)
+	floor.position = Vector2(0, 96)
 	stack.add_child(floor)
 	_atlas = AtlasTexture.new()
 	var hero := TextureRect.new()
 	hero.texture = _atlas
 	hero.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	hero.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	hero.size = Vector2(110, 187)
-	hero.position = Vector2(41, 0)
+	hero.size = Vector2(80, 136)        # escala inteira 4x: pixels nítidos
+	hero.position = Vector2(40, 0)
 	stack.add_child(hero)
 	_preview_name = _label("", 18, Color.WHITE)
 	_preview_name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_preview_name.add_theme_color_override("font_outline_color", C_INK)
 	_preview_name.add_theme_constant_override("outline_size", 6)
 	box.add_child(_preview_name)
+	box.add_child(_label("Estilo", 15, C_MUTED))
+	var body_row := HBoxContainer.new()
+	body_row.add_theme_constant_override("separation", 6)
+	for i in Skins.BODY.size():
+		var b := Button.new()
+		b.text = Skins.BODY[i].name
+		b.focus_mode = Control.FOCUS_NONE
+		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		b.add_theme_font_size_override("font_size", 16)
+		b.pressed.connect(func():
+			profile.body = i
+			if audio: audio.play("click", -6.0)
+			_refresh())
+		body_row.add_child(b)
+		_body_buttons.append(b)
+	box.add_child(body_row)
 	for k in [["skin", "Pele", Skins.SKIN], ["hair", "Cabelo", Skins.HAIR], ["shirt", "Camisa", Skins.SHIRT]]:
 		box.add_child(_label(k[1], 15, C_MUTED))
 		box.add_child(_swatch_row(k[0], k[2]))
@@ -251,7 +270,7 @@ func _card(title: String, accent: Color) -> PanelContainer:
 	st.shadow_offset = Vector2(5, 5)
 	p.add_theme_stylebox_override("panel", st)
 	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 8)
+	v.add_theme_constant_override("separation", 6)
 	p.add_child(v)
 	v.add_child(_label(title, 20, accent))
 	p.set_meta("box", v)
@@ -264,7 +283,7 @@ func _swatch_row(key: String, options: Array) -> HBoxContainer:
 	var list: Array[Button] = []
 	for i in options.size():
 		var b := Button.new()
-		b.custom_minimum_size = Vector2(30, 30)
+		b.custom_minimum_size = Vector2(28, 26)
 		b.tooltip_text = options[i].name
 		b.focus_mode = Control.FOCUS_NONE
 		b.pressed.connect(func():
@@ -301,7 +320,17 @@ func _mode_option(key: String, title: String, desc: String) -> PanelContainer:
 
 
 func _refresh() -> void:
-	_atlas.atlas = Skins.texture(profile.skin, profile.hair, profile.shirt)
+	_atlas.atlas = Skins.texture(profile.skin, profile.hair, profile.shirt, int(profile.body))
+	for i in _body_buttons.size():
+		var sel: bool = int(profile.body) == i
+		var bs := StyleBoxFlat.new()
+		bs.bg_color = C_CARD2 if sel else Color("1d2238")
+		bs.border_color = Color.WHITE if sel else C_INK
+		bs.set_border_width_all(3 if sel else 2)
+		bs.set_content_margin_all(6)
+		for state in ["normal", "hover", "pressed"]:
+			_body_buttons[i].add_theme_stylebox_override(state, bs)
+		_body_buttons[i].add_theme_color_override("font_color", Color.WHITE if sel else C_MUTED)
 	_preview_name.text = _name.text.strip_edges() if _name and _name.text.strip_edges() != "" else "Seu nome"
 	for key in _swatches:
 		var list: Array = _swatches[key][0]

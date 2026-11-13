@@ -35,18 +35,22 @@ const SHIRT := [
 static var _cache := {}
 
 
-## Textura do técnico com a skin escolhida.
-static func texture(skin: int, hair: int, shirt: int) -> Texture2D:
-	var key := "%d-%d-%d" % [skin, hair, shirt]
+const BODY := [{"name": "Masculino", "sheet": "res://assets/sprites/technician.png"},
+	{"name": "Feminino", "sheet": "res://assets/sprites/technician_f.png"}]
+
+
+## Textura do personagem com a skin escolhida (body: 0 = masculino, 1 = feminino).
+static func texture(skin: int, hair: int, shirt: int, body: int = 0) -> Texture2D:
+	var key := "%d-%d-%d-%d" % [skin, hair, shirt, body]
 	if not _cache.has(key):
-		_cache[key] = ImageTexture.create_from_image(image(skin, hair, shirt))
+		_cache[key] = ImageTexture.create_from_image(image(skin, hair, shirt, body))
 	return _cache[key]
 
 
-## Imagem do técnico recolorida (pixel a pixel).
-static func image(skin: int, hair: int, shirt: int) -> Image:
+## Imagem do personagem recolorida (pixel a pixel).
+static func image(skin: int, hair: int, shirt: int, body: int = 0) -> Image:
 	# importado como Image (não textura): os pixels ficam sempre disponíveis na memória
-	var img: Image = (load("res://assets/sprites/technician.png") as Image).duplicate()
+	var img: Image = (load(BODY[clampi(body, 0, BODY.size() - 1)].sheet) as Image).duplicate()
 	img.convert(Image.FORMAT_RGBA8)
 	var pairs: Array = []   # [cor de origem, cor nova]
 	for i in SRC_SKIN.size():

@@ -19,6 +19,7 @@ SET, SET_L = "#262b44", "#5a6988"
 WHITE, LANYARD = "#ffffff", "#feae34"
 LED = "#63c74d"
 CHEEK = "#f6757a"
+FEM = False            # True = versão feminina (cabelo comprido, cílios, lábios)
 
 # deslocamentos por quadro de caminhada: (bob do corpo, perna esq dy, perna dir dy, braço esq dy, braço dir dy)
 WALK = [
@@ -103,30 +104,65 @@ def head(s, back, bob):
         s.px(9, y + 12, LED)
 
 
+def long_hair_behind(s, back, bob):
+    """Cabelo comprido caindo atrás dos ombros (desenhado antes do tronco)."""
+    y = bob
+    s.rect(3, y + 7, 16, y + 19, HAIR_D)
+    s.rect(4, y + 7, 15, y + 18, HAIR)
+    s.rect(4, y + 16, 15, y + 19, HAIR_D)
+
+
+def fem_details(s, back, bob):
+    y = bob
+    if back:
+        # cabelo solto cobrindo as costas, com mechas e brilho
+        s.rect(5, y + 9, 14, y + 21, HAIR)
+        s.rect(12, y + 10, 14, y + 21, HAIR_D)
+        s.rect(5, y + 20, 14, y + 21, HAIR_D)
+        s.line(7, y + 10, 7, y + 18, HAIR_L)
+        s.px(9, y + 21, HAIR); s.px(11, y + 21, HAIR)
+    else:
+        # mecha da frente caindo sobre o ombro esquerdo
+        s.rect(4, y + 9, 6, y + 17, HAIR)
+        s.rect(4, y + 15, 6, y + 17, HAIR_D)
+        s.px(5, y + 10, HAIR_L)
+        # lábios
+        s.px(11, y + 11, CHEEK)
+
+
 def draw(s, back, step):
     bob, l_dy, r_dy, la, ra = WALK[step]
+    if FEM:
+        long_hair_behind(s, back, bob)
     legs(s, back, l_dy, r_dy)
     torso(s, back, bob, la, ra)
     head(s, back, bob)
+    if FEM:
+        fem_details(s, back, bob)
     s.outline(OUT, where="outside")
 
 
-s = Sprite(W, H, palette="endesga32")
-first = True
-for back in (False, True):
-    for step in range(4):
-        if not first:
-            s.add_frame(copy=False)
-        first = False
-        draw(s, back, step)
-s.set_duration(130, frames=list(range(1, 9)))
-s.tag("frente", 1, 4)
-s.tag("costas", 5, 8)
+def build(fem):
+    global FEM
+    FEM = fem
+    s = Sprite(W, H, palette="endesga32")
+    first = True
+    for back in (False, True):
+        for step in range(4):
+            if not first:
+                s.add_frame(copy=False)
+            first = False
+            draw(s, back, step)
+    s.set_duration(130, frames=list(range(1, 9)))
+    s.tag("frente", 1, 4)
+    s.tag("costas", 5, 8)
+    suffix = "_f" if fem else ""
+    s.preview(os.path.join(HERE, "preview%s.png" % suffix), scale=8, cols=8)
+    s.stats()
+    out = os.path.join(HERE, "..", "..", "assets", "sprites", "technician%s.png" % suffix)
+    s.save_spritesheet(out, layout="horizontal", padding=0, json_path=None)
+    print("ok ->", os.path.normpath(out))
 
-s.preview(os.path.join(HERE, "preview.png"), scale=8, cols=8)
-s.save_silhouette(os.path.join(HERE, "silhouette.png"), frame=1)
-s.stats()
-out = os.path.join(HERE, "..", "..", "assets", "sprites", "technician.png")
-s.save_spritesheet(out, layout="horizontal", padding=0, json_path=None)
-s.save_png(os.path.join(HERE, "technician@6x.png"), frame=1, scale=6)
-print("ok ->", os.path.normpath(out))
+
+build(False)
+build(True)
