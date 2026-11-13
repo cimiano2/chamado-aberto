@@ -292,6 +292,45 @@ def sofa():
     save(s, "sofa", (ax, ay))
 
 
+def workbench():
+    """Bancada de manutenção do suporte: gabinete aberto, monitor, peças e ferramentas."""
+    s, ax, ay = auto(160, 56, 34)
+    iso_box(s, ax, ay, 160, 56, 14, "#8b9bb4", "#5a6988", "#3a4466")
+    iso_box(s, ax, ay, 150, 48, 2, "#c0cbdc", "#8b9bb4", "#8b9bb4", z0=14, outline=False)      # tampo
+    iso_box(s, ax, ay, 30, 46, 22, "#3a4466", "#262b44", "#181425", z0=16, ox=-48)            # gabinete
+    iso_box(s, ax, ay, 4, 34, 18, "#63c74d", "#3e8948", "#3e8948", z0=18, ox=-34, outline=False)  # placa-mãe à mostra
+    iso_box(s, ax, ay, 40, 6, 16, METAL[1], METAL[0], METAL[0], z0=16, ox=10, oy=-16)          # monitor
+    g1 = iso(ax, ay, -8, -20, 30); g2 = iso(ax, ay, 28, -20, 30)
+    s.line(g1[0], g1[1], g2[0], g2[1], "#0099db")
+    iso_box(s, ax, ay, 18, 10, 2, "#63c74d", "#3e8948", "#3e8948", z0=16, ox=48, oy=8, outline=False)   # pente de memória
+    iso_box(s, ax, ay, 22, 6, 2, "#e43b44", "#a22633", "#a22633", z0=16, ox=60, oy=-6, outline=False)   # chave de fenda
+    iso_box(s, ax, ay, 14, 14, 3, "#feae34", "#d77643", "#d77643", z0=16, ox=30, oy=12, outline=False)  # caixa de parafusos
+    save(s, "workbench", (ax, ay))
+
+
+def shelf():
+    """Estante com caixas de equipamentos."""
+    s, ax, ay = auto(96, 32, 44)
+    iso_box(s, ax, ay, 96, 32, 44, METAL[2], METAL[1], METAL[0])
+    for k, z in enumerate((4, 18, 32)):
+        a = iso(ax, ay, -48, 16, z + 12); b = iso(ax, ay, 48, 16, z + 12)
+        s.line(a[0], a[1], b[0], b[1], METAL[0])
+        for j, col in enumerate((("#b86f50", "#733e39"), ("#c0cbdc", "#8b9bb4"), ("#feae34", "#d77643"))):
+            if (j + k) % 3 == 2:
+                continue
+            iso_box(s, ax, ay, 24, 20, 9, col[0], col[1], col[1], z0=z + 1, ox=-30 + j * 30, oy=4, outline=False)
+    save(s, "shelf", (ax, ay))
+
+
+def ups():
+    """Nobreak da sala de servidores."""
+    s, ax, ay = auto(40, 48, 22)
+    iso_box(s, ax, ay, 40, 48, 22, "#3a4466", "#262b44", "#181425")
+    p = iso(ax, ay, -10, 24, 14); s.px(p[0], p[1], "#63c74d")
+    p = iso(ax, ay, -2, 24, 14); s.px(p[0], p[1], "#feae34")
+    save(s, "ups", (ax, ay))
+
+
 def carpet_tile(name, dark, light, speck):
     s = canvas(32, 16)
     s.polygon([(16, 0), (31, 7), (16, 15), (0, 7)], dark)
@@ -313,7 +352,7 @@ plant(); cooler()
 alert("alert", "#feae34", "#fee761")
 alert("alert_high", "#b55088", "#f6757a")
 alert("alert_urgent", "#e43b44", "#f77622")
-conference_table(); vending(); fridge(); counter(); kitchen_table()
+conference_table(); vending(); fridge(); counter(); kitchen_table(); workbench(); shelf(); ups()
 filing(); copier(); reception(); sofa()
 carpet_tile("carpete", "#5a6988", "#8b9bb4", "#3a4466")        # área de vendas
 carpet_tile("gerente", "#68386c", "#b55088", "#3e2731")        # sala do gerente
@@ -324,6 +363,7 @@ carpet_tile("ti", "#124e89", "#0099db", "#193c3e")
 flat_tile("copa_a", "#ffffff", "#c0cbdc")                       # piso xadrez da copa
 flat_tile("copa_b", "#8b9bb4", "#5a6988")
 flat_tile("servidores", "#3a4466", "#262b44")
+flat_tile("corredor", "#c0cbdc", "#8b9bb4")
 
 with open(os.path.join(OUTDIR, "anchors.json"), "w") as f:
     json.dump(ANCHORS, f, indent=1)

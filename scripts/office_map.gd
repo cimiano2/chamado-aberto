@@ -5,9 +5,9 @@ extends Node2D
 ## o desenho projeta tudo em isometria 2:1 (1 ladrilho = 64 unidades = losango de 32x16 px).
 
 const TILE := 64.0
-const COLS := 27
-const ROWS := 18
-const START := Vector2(1536, 330)       # sala do Suporte TI
+const COLS := 31
+const ROWS := 20
+const START := Vector2(1544, 290)       # sala do Suporte TI
 
 const H_BACK := 56.0     # paredes do fundo (norte/oeste), com janelas
 const H_GLASS := 40.0    # vidro da gerência e da reunião
@@ -18,15 +18,16 @@ const H_FRONT := 8.0     # bordas da frente (recortadas, estilo casa de bonecas)
 var rooms: Array[Dictionary] = [
 	{"name": "REUNIÃO", "tiles": Rect2i(1, 1, 6, 5), "floor": "reuniao", "color": Color("0099db")},
 	{"name": "GERÊNCIA", "tiles": Rect2i(8, 1, 6, 5), "floor": "gerente", "color": Color("b55088")},
-	{"name": "COPA", "tiles": Rect2i(15, 1, 6, 5), "floor": "copa", "color": Color("feae34")},
-	{"name": "SUPORTE TI", "tiles": Rect2i(22, 1, 4, 5), "floor": "ti", "color": Color("2ce8f5")},
-	{"name": "VENDAS", "tiles": Rect2i(1, 7, 17, 10), "floor": "carpete", "color": Color("c0cbdc")},
-	{"name": "RH E CONTABILIDADE", "tiles": Rect2i(19, 7, 7, 5), "floor": "anexo", "color": Color("63c74d")},
-	{"name": "SERVIDORES", "tiles": Rect2i(19, 13, 7, 4), "floor": "servidores", "color": Color("8b9bb4")},
+	{"name": "COPA", "tiles": Rect2i(15, 1, 5, 5), "floor": "copa", "color": Color("feae34")},
+	{"name": "SUPORTE TI", "tiles": Rect2i(21, 1, 9, 5), "floor": "ti", "color": Color("2ce8f5")},
+	{"name": "VENDAS", "tiles": Rect2i(1, 7, 17, 12), "floor": "carpete", "color": Color("c0cbdc")},
+	{"name": "CORREDOR", "tiles": Rect2i(19, 7, 3, 12), "floor": "corredor", "color": Color("c0cbdc"), "plaque": false},
+	{"name": "RH E CONTABILIDADE", "tiles": Rect2i(23, 7, 7, 6), "floor": "anexo", "color": Color("63c74d")},
+	{"name": "SERVIDORES", "tiles": Rect2i(23, 14, 7, 5), "floor": "servidores", "color": Color("8b9bb4")},
 ]
 ## Portas (ladrilhos de parede que viram piso).
-const DOOR_TILES: Array[Vector2i] = [Vector2i(4, 6), Vector2i(11, 6), Vector2i(17, 6), Vector2i(23, 6),
-	Vector2i(18, 9), Vector2i(22, 12)]
+const DOOR_TILES: Array[Vector2i] = [Vector2i(4, 6), Vector2i(11, 6), Vector2i(17, 6), Vector2i(21, 6),
+	Vector2i(18, 10), Vector2i(18, 15), Vector2i(22, 9), Vector2i(22, 16)]
 ## Paredes de vidro (frente da reunião e da gerência).
 const GLASS_ROWS := {6: [[1, 6], [8, 13]]}
 
@@ -73,6 +74,9 @@ const TEX := {
 	"copier": preload("res://assets/sprites/copier.png"),
 	"reception": preload("res://assets/sprites/reception.png"),
 	"sofa": preload("res://assets/sprites/sofa.png"),
+	"workbench": preload("res://assets/sprites/workbench.png"),
+	"shelf": preload("res://assets/sprites/shelf.png"),
+	"ups": preload("res://assets/sprites/ups.png"),
 }
 var ANCHOR := {}      # lido de assets/sprites/anchors.json
 ## Pegada (mundo) de cada móvel, usada na colisão.
@@ -81,6 +85,7 @@ const FOOT := {
 	"conference_table": Vector2(256, 128), "vending": Vector2(56, 48), "fridge": Vector2(48, 44),
 	"counter": Vector2(192, 48), "kitchen_table": Vector2(72, 72), "filing": Vector2(40, 32),
 	"copier": Vector2(72, 52), "reception": Vector2(192, 56), "sofa": Vector2(128, 48),
+	"workbench": Vector2(160, 56), "shelf": Vector2(96, 32), "ups": Vector2(40, 48),
 }
 const FLOOR_TEX := {
 	"carpete": preload("res://assets/sprites/floor_carpete.png"),
@@ -92,6 +97,7 @@ const FLOOR_TEX := {
 	"copa_a": preload("res://assets/sprites/floor_copa_a.png"),
 	"copa_b": preload("res://assets/sprites/floor_copa_b.png"),
 	"servidores": preload("res://assets/sprites/floor_servidores.png"),
+	"corredor": preload("res://assets/sprites/floor_corredor.png"),
 }
 const C_OUT := Color("181425")
 const WALL_TOP := Color("ead4aa")
@@ -147,21 +153,23 @@ func build() -> void:
 	var vendas := room_rect("VENDAS")
 	var all_kinds := ["slow", "printer", "password", "phishing", "cables", "hardware"]
 
-	# ---- Área de vendas: 2 fileiras de 3 mesas, recepção na frente, copiadora e arquivos
+	# ---- Área de vendas: 2 fileiras de 3 mesas, recepção com sala de espera, copiadora e arquivos
 	for row in 2:
 		for col in 3:
-			var c := Vector2(vendas.position.x + 224 + col * 352, vendas.position.y + 150 + row * 210)
+			var c := Vector2(vendas.position.x + 224 + col * 352, vendas.position.y + 160 + row * 230)
 			_add_desk("desk", c, "Vendas", names.pop_front(), all_kinds, false, look)
 			look += 3
-	_add_desk("reception", Vector2(vendas.position.x + 200, vendas.end.y - 110), "Recepção",
+	_add_desk("reception", Vector2(vendas.position.x + 200, vendas.end.y - 120), "Recepção",
 		names.pop_front(), ["printer", "phishing", "password"], false, look)
 	look += 3
-	_add_prop("copier", Vector2(vendas.end.x - 70, vendas.end.y - 90))
+	_add_prop("sofa", Vector2(vendas.position.x + 520, vendas.end.y - 50))
+	_add_prop("plant", Vector2(vendas.position.x + 650, vendas.end.y - 40))
+	_add_prop("copier", Vector2(vendas.end.x - 70, vendas.end.y - 100))
+	_add_prop("filing", Vector2(vendas.end.x - 40, vendas.end.y - 220))
 	for k in 3:
-		_add_prop("filing", Vector2(vendas.position.x + 30, vendas.position.y + 120 + k * 48))
+		_add_prop("filing", Vector2(vendas.position.x + 30, vendas.position.y + 130 + k * 48))
 	_add_prop("plant", Vector2(vendas.position.x + 36, vendas.end.y - 40))
 	_add_prop("plant", Vector2(vendas.end.x - 36, vendas.position.y + 36))
-	_add_prop("cooler", Vector2(vendas.end.x - 160, vendas.end.y - 40))
 
 	# ---- Gerência (vidro): mesa do gerente, sofá, planta, arquivo
 	var ger := room_rect("GERÊNCIA")
@@ -178,43 +186,59 @@ func build() -> void:
 		names.pop_front(), ["cables", "hardware"], false, -1)
 	_add_prop("plant", reu.position + Vector2(36, 36))
 
-	# ---- Copa: bancada, geladeira, máquina de lanches, mesa (sem chamados)
+	# ---- Copa: bancada, geladeira, mesa e bebedouro (sem chamados)
 	var copa := room_rect("COPA")
-	_add_prop("counter", Vector2(copa.position.x + 140, copa.position.y + 40))
-	_add_prop("fridge", Vector2(copa.position.x + 280, copa.position.y + 40))
-	_add_prop("vending", Vector2(copa.end.x - 44, copa.position.y + 40))
-	_add_prop("kitchen_table", copa.get_center() + Vector2(-40, 40))
-	_add_prop("cooler", Vector2(copa.end.x - 30, copa.end.y - 70))
+	_add_prop("counter", Vector2(copa.position.x + 110, copa.position.y + 40))
+	_add_prop("fridge", Vector2(copa.position.x + 260, copa.position.y + 40))
+	_add_prop("kitchen_table", copa.get_center() + Vector2(-20, 50))
+	_add_prop("cooler", Vector2(copa.end.x - 30, copa.end.y - 40))
 
-	# ---- Suporte TI: base do técnico (mesas sem chamado)
+	# ---- Suporte TI: bancada de manutenção, estante, mesa do técnico
 	var ti := room_rect("SUPORTE TI")
-	props.append({"kind": "desk_empty", "center": Vector2(ti.get_center().x, ti.position.y + 110), "look": 0})
-	obstacles.append(Rect2(Vector2(ti.get_center().x, ti.position.y + 110) - FOOT["desk"] / 2, FOOT["desk"]))
+	_add_prop("workbench", Vector2(ti.position.x + 140, ti.position.y + 44))
+	_add_prop("shelf", Vector2(ti.end.x - 64, ti.position.y + 30))
+	_add_prop("shelf", Vector2(ti.end.x - 170, ti.position.y + 30))
+	var tdesk := Vector2(ti.position.x + 430, ti.position.y + 190)
+	props.append({"kind": "desk_empty", "center": tdesk, "look": 0})
+	obstacles.append(Rect2(tdesk - FOOT["desk"] / 2, FOOT["desk"]))
 	_add_prop("plant", Vector2(ti.end.x - 36, ti.end.y - 36))
+	_add_prop("filing", Vector2(ti.position.x + 30, ti.end.y - 60))
 
-	# ---- Anexo: 2 mesas da contabilidade + 1 do RH, arquivos
+	# ---- Corredor: máquina de lanches, bebedouro e plantas encostados nas paredes
+	var cor := room_rect("CORREDOR")
+	# (portas: oeste em y 640-704 e 960-1024; leste em y 576-640 e 1024-1088)
+	_add_prop("vending", Vector2(cor.end.x - 32, cor.position.y + 300))
+	_add_prop("cooler", Vector2(cor.end.x - 26, cor.position.y + 420))
+	_add_prop("plant", Vector2(cor.end.x - 30, cor.position.y + 500))
+	_add_prop("plant", Vector2(cor.position.x + 30, cor.end.y - 36))
+	_add_prop("plant", Vector2(cor.position.x + 30, cor.position.y + 40))
+
+	# ---- RH e Contabilidade: 2 mesas da contabilidade + 1 do RH, arquivos
 	var cont := room_rect("RH E CONTABILIDADE")
 	var cont_kinds := ["slow", "printer", "password", "hardware", "phishing"]
-	for c in [Vector2(cont.position.x + 120, cont.position.y + 110), Vector2(cont.position.x + 340, cont.position.y + 110)]:
+	for c in [Vector2(cont.position.x + 125, cont.position.y + 110), Vector2(cont.position.x + 335, cont.position.y + 110)]:
 		_add_desk("desk", c, "Contabilidade", names.pop_front(), cont_kinds, false, look)
 		look += 3
-	_add_desk("desk", Vector2(cont.position.x + 230, cont.position.y + 240), "RH", names.pop_front(),
+	_add_desk("desk", Vector2(cont.position.x + 230, cont.position.y + 270), "RH", names.pop_front(),
 		["password", "phishing", "printer"], false, look)
 	look += 3
-	_add_prop("filing", Vector2(cont.end.x - 30, cont.end.y - 40))
+	_add_prop("filing", Vector2(cont.end.x - 26, cont.end.y - 120))
+	_add_prop("filing", Vector2(cont.end.x - 26, cont.end.y - 70))
+	_add_prop("plant", cont.position + Vector2(36, 36))
 
-	# ---- Servidores: racks encostados na parede do fundo da sala
+	# ---- Servidores: três racks na parede do fundo, nobreaks e estante
 	var srv := room_rect("SERVIDORES")
+	var rack_names := ["ARQ01", "WEB01", "BD01"]
 	for k in 3:
 		var c := Vector2(srv.position.x + 90 + k * 140, srv.position.y + 70)
-		if k == 1:
-			continue   # vão livre na frente da porta
 		var rect := Rect2(c - FOOT["rack"] / 2, FOOT["rack"])
 		obstacles.append(rect)
 		desks.append({"pos": Vector2(c.x, rect.end.y + 40), "rect": rect, "center": c, "dept": "Servidores",
-			"employee": "Servidor %s" % ["ARQ01", "", "BD01"][k], "kinds": ["hardware", "slow"],
+			"employee": "Servidor %s" % rack_names[k], "kinds": ["hardware", "slow"],
 			"priority": false, "server": true, "look": -1, "sprite": "rack"})
-	_add_prop("plant", Vector2(srv.end.x - 30, srv.end.y - 30))
+	_add_prop("ups", Vector2(srv.position.x + 90, srv.end.y - 40))
+	_add_prop("ups", Vector2(srv.position.x + 150, srv.end.y - 40))
+	_add_prop("shelf", Vector2(srv.end.x - 70, srv.end.y - 30))
 
 	_build_walls()
 

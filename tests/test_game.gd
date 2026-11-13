@@ -161,6 +161,21 @@ func _init() -> void:
 				changed += 1
 	check(changed > 100, "skin recolore o técnico (%d pixels)" % changed)
 
+	# ---- áudio: música desligada por padrão, música e efeitos independentes e salvos
+	DirAccess.remove_absolute(Audio.PREF_PATH)
+	var au := Audio.new()
+	root.add_child(au)
+	check(not au.music_on and au.sfx_on, "música começa desligada e efeitos ligados")
+	au.set_music(true)
+	au.set_sfx(false)
+	var au2 := Audio.new()
+	root.add_child(au2)
+	check(au2.music_on and not au2.sfx_on, "escolhas de música e efeitos ficam salvas e são independentes")
+	au2.set_music(false)
+	au2.set_sfx(true)
+	au.queue_free()
+	au2.queue_free()
+
 	# ---- sessão salva: continuar restaura a pontuação e conta o reinício
 	var prof := {"name": "Teste Save", "class_code": "T1", "skin": 1, "hair": 2, "shirt": 3}
 	main.start_session(prof, "avaliacao", false)

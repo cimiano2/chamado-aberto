@@ -50,8 +50,8 @@ func _init() -> void:
 	var player: Player = main.get_node("%Player")
 	var cam: Camera2D = main.get_node("%Camera2D")
 	var view: Control = main.get_node("%WorldView")
-	player.position = Vector2(600, 760)     # meio da área de vendas
-	var landmark := Vector2(600, 700)       # ponto fixo do cenário
+	player.position = Vector2(760, 1010)    # área livre da sala de vendas
+	var landmark := Vector2(760, 950)       # ponto fixo do cenário
 	for dir in [KEY_RIGHT, KEY_DOWN, KEY_UP]:
 		_key(dir, true)
 		var ps: Array[Vector2] = []

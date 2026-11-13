@@ -14,6 +14,14 @@ func _init() -> void:
 	root.add_child(main)
 	for i in 8: await process_frame
 	await _shot(out + "/menu.png")
+	main._menu._show_help()
+	for i in 4: await process_frame
+	await _shot(out + "/menu_ajuda.png")
+	main._menu._close_popup()
+	main._menu._show_board()
+	for i in 4: await process_frame
+	await _shot(out + "/menu_placar.png")
+	main._menu._close_popup()
 
 	main.start_session({"name": "Marina Lopes", "class_code": "INFO1A", "skin": 2, "hair": 3, "shirt": 1}, "avaliacao", false)
 	var ts: TicketSystem = main.tickets
@@ -42,9 +50,12 @@ func _init() -> void:
 	player.position = Vector2(704, 300)    # dentro da gerência (atrás do vidro)
 	for i in 10: await process_frame
 	await _shot(out + "/gerencia.png")
-	player.position = Vector2(1100, 260)    # copa
+	player.position = Vector2(1300, 900)    # corredor, perto do anexo e dos servidores
 	for i in 10: await process_frame
-	await _shot(out + "/copa.png")
+	await _shot(out + "/direita.png")
+	player.position = OfficeMap.START       # sala do suporte
+	for i in 10: await process_frame
+	await _shot(out + "/ti.png")
 	for kind in TicketSystem.TYPES.keys():
 		var tk := {"id": 42, "desk": 0, "kind": kind, "dept": "Vendas", "employee": "Carla",
 			"title": TicketSystem.TYPES[kind].titles[0], "priority": false, "sla_total": 999.0, "sla_left": 999.0}

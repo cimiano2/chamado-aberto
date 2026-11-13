@@ -1,6 +1,6 @@
 # Chamado Aberto
 
-Jogo 2D educativo em **pixel art isométrica**, feito em **Godot 4.3**. Você é o **técnico de TI** da *Papéis Horizonte Ltda.*, um escritório de vendas com área aberta, sala do gerente com parede de vidro, sala de reunião, copa, anexo de RH e contabilidade e sala de servidores: anda pelo escritório **com o teclado**, chega nas mesas com chamado aberto e resolve o problema antes que o prazo (SLA) estoure. Os problemas são os do **dia a dia de um técnico de suporte**, no nível do 1º semestre do curso técnico em informática.
+Jogo 2D educativo em **pixel art isométrica**, feito em **Godot 4.3**. Você é o **técnico de TI** da *Papéis Horizonte Ltda.*, um escritório de vendas com área aberta, sala do gerente com parede de vidro, sala de reunião, copa, corredor, anexo de RH e contabilidade, sala de servidores e a sala do Suporte TI com bancada de manutenção: anda pelo escritório **com o teclado**, chega nas mesas com chamado aberto e resolve o problema antes que o prazo (SLA) estoure. Os problemas são os do **dia a dia de um técnico de suporte**, no nível do 1º semestre do curso técnico em informática.
 
 ![Escritório](docs/jogo.png)
 
@@ -22,8 +22,9 @@ Jogo 2D educativo em **pixel art isométrica**, feito em **Godot 4.3**. Você é
 | `E` (ou `Espaço`/`Enter`) | atender o chamado da mesa à sua frente |
 | `1`–`9` / `Enter` | escolher e confirmar dentro do atendimento |
 | `Esc` | sair do atendimento sem resolver |
-| `P` | pausa · `M` liga/desliga o som |
+| `P` | pausa · `M` liga/desliga a música · `N` liga/desliga os efeitos |
 
+- A **música começa desligada**; música e efeitos sonoros têm chaves separadas no menu e na pausa.
 - Na tela inicial o aluno digita o **nome**, o **código da turma** e escolhe **pele, cabelo e camisa** do personagem.
 - **Treino**: expedientes seguidos, a sessão é **salva** no início de cada dia (botão *Continuar*).
 - **Avaliação**: um expediente (5 min), no fim aparece a nota e o botão **Baixar relatório**.

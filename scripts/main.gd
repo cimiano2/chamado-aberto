@@ -80,7 +80,7 @@ func _ready() -> void:
 	_audio = Audio.new()
 	add_child(_audio)
 	_balloons = Balloons.new()
-	_balloons.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_balloons.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_balloons.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_balloons.to_screen = _to_screen
 	_room_labels.get_parent().add_child(_balloons)
@@ -115,12 +115,15 @@ func _new_tickets(seed_value: int) -> void:
 func _show_menu() -> void:
 	state = State.TITLE
 	_overlay.visible = false
+	_room_labels.get_parent().visible = false     # HUD escondido enquanto o menu está aberto
 	if _menu_layer:
 		_menu_layer.queue_free()
 	_menu_layer = CanvasLayer.new()
 	_menu_layer.layer = 5
 	add_child(_menu_layer)
 	_menu = Menu.new()
+	_menu.audio = _audio
+	_audio.changed.connect(_menu._refresh)
 	_menu.start_requested.connect(start_session)
 	_menu_layer.add_child(_menu)
 
@@ -144,6 +147,7 @@ func start_session(p: Dictionary, m: String, resume: bool) -> void:
 	if _menu_layer:
 		_menu_layer.queue_free()
 		_menu_layer = null
+	_room_labels.get_parent().visible = true
 	_audio.start_music()
 	_audio.play("click")
 	state = State.PLAYING
@@ -199,9 +203,12 @@ func _update_camera() -> void:
 	r = r.round()
 	_cam_f = r
 	_camera.position = r
+	var me := Rect2(_to_screen(OfficeMap.iso_f(_player.position)) - Vector2(24, 76), Vector2(48, 82))
 	for p in _plaques:
 		var node: Control = p.node
 		node.position = (_to_screen(OfficeMap.iso_f(p.world, 30)) - node.size / 2.0).round()
+		# placa fica quase transparente quando o personagem passa por trás dela
+		node.modulate.a = 0.25 if Rect2(node.position, node.size).intersects(me) else 1.0
 	_name_tag.visible = state != State.TITLE
 	_name_tag.position = (_to_screen(OfficeMap.iso_f(_player.position)) + Vector2(-_name_tag.size.x / 2.0, 6)).round()
 
@@ -217,6 +224,8 @@ func _player_head() -> Vector2:
 
 func _build_plaques() -> void:
 	for room in _map.rooms:
+		if not room.get("plaque", true):
+			continue
 		var r: Rect2 = room.rect
 		var back_row: bool = r.position.y < 2 * OfficeMap.TILE
 		var world := Vector2(r.get_center().x, r.end.y - 50 if back_row else r.position.y + 50)
@@ -347,8 +356,15 @@ func _unhandled_input(event: InputEvent) -> void:
 	if key == null or not key.pressed or key.echo:
 		return
 	var k := key.keycode
-	if k == KEY_M and state != State.TITLE:
-		_show_toast("Som desligado" if _audio.toggle_mute() else "Som ligado", Color("c0cbdc"))
+	if k in [KEY_M, KEY_N] and state != State.TITLE:
+		if k == KEY_M:
+			_audio.set_music(not _audio.music_on)
+			_show_toast("Música %s (M)" % ("ligada" if _audio.music_on else "desligada"), Color("c0cbdc"))
+		else:
+			_audio.set_sfx(not _audio.sfx_on)
+			_show_toast("Efeitos sonoros %s (N)" % ("ligados" if _audio.sfx_on else "desligados"), Color("c0cbdc"))
+		if state == State.PAUSED:
+			_show_pause()
 		get_viewport().set_input_as_handled()
 		return
 	match state:
@@ -557,7 +573,9 @@ func download_report() -> String:
 
 func _show_pause() -> void:
 	state = State.PAUSED
-	_overlay_text.text = "[color=#2ce8f5][font_size=28]PAUSA PARA O CAFÉ[/font_size][/color]\n\nO relógio parou. Aperte [b]P[/b], [b]Esc[/b] ou [b]Enter[/b] para voltar.\n[b]M[/b] liga/desliga o som."
+	_overlay_text.text = "[color=#2ce8f5][font_size=28]PAUSA PARA O CAFÉ[/font_size][/color]\n\nO relógio parou. Aperte [b]P[/b], [b]Esc[/b] ou [b]Enter[/b] para voltar.\n\n[b]M[/b]  Música: %s\n[b]N[/b]  Efeitos sonoros: %s" % [
+		"[color=#63c74d]ligada[/color]" if _audio.music_on else "[color=#e43b44]desligada[/color]",
+		"[color=#63c74d]ligados[/color]" if _audio.sfx_on else "[color=#e43b44]desligados[/color]"]
 	_overlay_button.text = "[Enter] Voltar ao trabalho"
 	_overlay_button2.visible = false
 	_overlay.visible = true
