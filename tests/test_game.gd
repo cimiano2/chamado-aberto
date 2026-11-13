@@ -48,7 +48,7 @@ func _init() -> void:
 	check(ts.tickets.is_empty() and ts.satisfaction < sat and ts.expired == 1, "SLA estourado remove chamado e reduz satisfação")
 
 	# ---- cada minijogo, resolvido pelo teclado
-	for kind in ["cpu", "paging", "deadlock", "disk", "chmod", "alloc"]:
+	for kind in TicketSystem.TYPES.keys():
 		var desk := 0
 		for i in map.desks.size():
 			if map.desks[i].kinds.has(kind):
@@ -95,70 +95,71 @@ func _key(task: TaskBase, n: int) -> void:
 	task.handle_key(KEY_1 + n)
 
 
-## Resolve o minijogo usando a lógica de OSLogic e apertando as teclas.
-## Antes da resposta certa, faz uma jogada errada para testar o retorno de erro.
+## Resolve o minijogo apertando as teclas, com um erro proposital antes da resposta certa.
 func _solve(task: TaskBase, kind: String) -> bool:
 	match kind:
-		"cpu":
-			var names: Array = task.procs.map(func(p): return p.name)
-			var wrong_i := names.find(task.expected[1])
-			_key(task, wrong_i)
-			for n in task.expected:
-				_key(task, names.find(n))
-		"deadlock":
-			var blocked := -1
-			for i in 4:
-				if not OSLogic.fits(task.need[i], task.work):
-					blocked = i
+		"network":
+			var first := true
+			while not task.is_solved:
+				var good: int = task.options.find(task.scenario.cause)
+				if first:
+					_key(task, (good + 1) % 4)
+					first = false
+				_key(task, good)
+				await process_frame
+		"printer":
+			var joke := -1
+			for i in task.actions.size():
+				if task.actions[i].issue == "":
+					joke = i
 					break
-			_key(task, blocked)
-			for _round in 4:
-				for i in 4:
-					if not task.finished[i] and OSLogic.fits(task.need[i], task.work):
+			_key(task, joke)
+			for _n in 2:
+				for i in task.actions.size():
+					if task.issues.has(task.actions[i].issue):
 						_key(task, i)
 						break
-		"disk":
-			var sorted: Array = task.requests.duplicate()
-			sorted.sort()
-			_key(task, sorted.find(task.expected[-1]))
-			for c in task.expected:
-				_key(task, sorted.find(c))
-		"chmod":
-			task.handle_key(KEY_ENTER)    # tudo desmarcado: erro (nenhum alvo é 000)
-			for _round in task.rounds:
-				var bits := OSLogic.octal_to_bits(task.target)
-				for i in 9:
-					if task._bits[i].button_pressed != bits[i]:
-						_key(task, i)
-				task.handle_key(KEY_ENTER)
-		"alloc":
+		"password":
+			# identidade: o erro primeiro, depois a certa
+			var btns: Array = task._hotkeys
+			var right := -1
+			for i in btns.size():
+				if btns[i].text.contains("crachá"):
+					right = i
+			_key(task, (right + 1) % btns.size())
+			_key(task, right)
+			await process_frame
+			for i in task.candidates.size():
+				if Helpdesk.password_problems(task.candidates[i], task.full_name).is_empty():
+					_key(task, i)
+					break
+		"slow":
+			# erro: marca um essencial e finaliza
+			var ess: int = task.procs.find(task.procs.filter(func(p): return p.kind == "essential")[0])
+			_key(task, ess)
+			task.handle_key(KEY_ENTER)
+			_key(task, ess)
+			for i in task.procs.size():
+				if task.procs[i].kind == "culprit":
+					_key(task, i)
+			task.handle_key(KEY_ENTER)
+		"phishing":
 			var first := true
-			while not task.queue.is_empty():
-				var req: Dictionary = task.queue[0]
-				var good := OSLogic.fit_choices(task.holes, req.size, task.algorithm)
+			while not task.is_solved:
+				var is_phish: bool = task.emails[task.index].phish
 				if first:
-					for i in task.holes.size():
-						if not good.has(i):
+					_key(task, 0 if is_phish else 1)
+					first = false
+				_key(task, 1 if is_phish else 0)
+		"cables":
+			var first := true
+			while not task.is_solved:
+				var d: Dictionary = task.devices[task.index]
+				if first:
+					for i in Helpdesk.PORTS.size():
+						if not d.ports.has(Helpdesk.PORTS[i]):
 							_key(task, i)
 							break
 					first = false
-				_key(task, good[0])
-				await process_frame
-		"paging":
-			var made_error := false
-			var guard := 0
-			while not task.is_solved and guard < 400:
-				guard += 1
-				if task.waiting_choice:
-					var good := OSLogic.page_victims(task.algorithm, task.frames, task.loaded_at, task.last_used, task.refs, task.t)
-					if not made_error:
-						for i in 3:
-							if not good.has(i):
-								_key(task, i)
-								made_error = true
-								break
-					_key(task, good[0])
-				else:
-					task._timer.stop()
-					task._step()
+				_key(task, Helpdesk.PORTS.find(d.ports[0]))
 	return task.is_solved

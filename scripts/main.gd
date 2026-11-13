@@ -19,6 +19,13 @@ var _near_desk := -1
 @onready var _player: Player = %Player
 @onready var _guide: Guide = %Guide
 @onready var _camera: Camera2D = %Camera2D
+@onready var _world_view: SubViewportContainer = %WorldView
+@onready var _room_labels: Control = %RoomLabels
+
+const VIEW_SCALE := 2.0          # o mundo (640x360) é ampliado 2x
+var _cam_bounds: Rect2
+var _cam_f := Vector2.ZERO       # posição da câmera sem arredondar (em pixels do mundo)
+var _plaques: Array = []         # [{node, world}]
 @onready var _clock: Label = %ClockLabel
 @onready var _day: Label = %DayLabel
 @onready var _score: Label = %ScoreLabel
@@ -42,13 +49,12 @@ var _near_desk := -1
 
 
 func _ready() -> void:
+	# processa DEPOIS do técnico: a câmera usa a posição já atualizada neste quadro
+	process_priority = 100
 	_player.map = _map
 	_map.player = _player
-	var b := _map.iso_bounds()
-	_camera.limit_left = int(b.position.x)
-	_camera.limit_top = int(b.position.y)
-	_camera.limit_right = int(b.end.x)
-	_camera.limit_bottom = int(b.end.y)
+	_cam_bounds = _map.iso_bounds()
+	_build_plaques()
 	_guide.player = _player
 	_minimap.map = _map
 	_minimap.player = _player
@@ -77,9 +83,56 @@ func _process(delta: float) -> void:
 	if state == State.PLAYING or state == State.TASK:
 		tickets.update(delta)
 	_player.can_move = state == State.PLAYING
-	_camera.position = OfficeMap.iso(_player.position, 18)
+	_update_camera()
 	_sync_world()
 	_refresh_hud()
+
+
+## Câmera sem tremer: travada no pixel exato do técnico (sem suavização nem frações).
+## Com a velocidade calibrada em player.gd, o cenário rola 2 px/quadro na horizontal e
+## 1 px/quadro na vertical, sempre inteiro, e o técnico fica parado no centro.
+func _update_camera() -> void:
+	var r := OfficeMap.iso(_player.position, 18)
+	var half := Vector2(320, 180)
+	r.x = clampf(r.x, _cam_bounds.position.x + half.x, maxf(_cam_bounds.position.x + half.x, _cam_bounds.end.x - half.x))
+	r.y = clampf(r.y, _cam_bounds.position.y + half.y, maxf(_cam_bounds.position.y + half.y, _cam_bounds.end.y - half.y))
+	r = r.round()
+	_cam_f = r
+	_camera.position = r
+	# placas das salas acompanham o mundo na resolução cheia
+	var center := get_viewport().get_visible_rect().size / 2.0
+	for p in _plaques:
+		var node: Control = p.node
+		node.position = ((OfficeMap.iso_f(p.world, 30) - r) * VIEW_SCALE + center - node.size / 2.0).round()
+
+
+func _build_plaques() -> void:
+	var colors := {"diretoria": Color("b55088"), "financeiro": Color("3e8948"), "rh": Color("e4a672"),
+		"suporte": Color("0099db"), "marketing": Color("e43b44"), "servidores": Color("8b9bb4")}
+	for room in _map.rooms:
+		var r: Rect2 = room.rect
+		var top_row: bool = r.position.y < _map.hall.position.y
+		# placa logo acima da porta, do lado de dentro da sala
+		var world := Vector2(r.get_center().x, r.end.y - 40 if top_row else r.position.y + 40)
+		var panel := PanelContainer.new()
+		var style := StyleBoxFlat.new()
+		style.bg_color = Color("181425")
+		style.border_color = colors[room.floor]
+		style.set_border_width_all(3)
+		style.set_content_margin_all(5)
+		style.content_margin_left = 10
+		style.content_margin_right = 10
+		style.shadow_color = Color(0, 0, 0, 0.5)
+		style.shadow_offset = Vector2(3, 3)
+		panel.add_theme_stylebox_override("panel", style)
+		panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var label := Label.new()
+		label.text = room.name
+		label.add_theme_font_size_override("font_size", 18)
+		label.add_theme_color_override("font_color", Color.WHITE)
+		panel.add_child(label)
+		_room_labels.add_child(panel)
+		_plaques.append({"node": panel, "world": world})
 
 
 func _sync_world() -> void:
@@ -217,6 +270,7 @@ func _interact() -> void:
 func _open_task(t: Dictionary) -> void:
 	var script: GDScript = load(TicketSystem.TYPES[t.kind].task)
 	_task = script.new()
+	_task.set_meta("employee", t.employee)
 	_task_ticket_id = t.id
 	_task_mistakes = 0
 	_task.feedback.connect(_on_task_feedback)
@@ -354,7 +408,7 @@ func _show_title() -> void:
 Cada chamado tem um prazo. Se estourar, a satisfação cai. Chamados da [color=#ff4fa3]Diretoria[/color] têm prioridade alta: prazo menor, mais pontos.
 Enquanto você atende um chamado, o prazo [b]dele[/b] para, mas o dos outros continua correndo!
 
-[color=#8592c4]Os problemas são de sistemas operacionais: escalonamento, memória, deadlock, disco, permissões e alocação.[/color]"""
+[color=#8592c4]Problemas do dia a dia do suporte: internet, impressora, senha, PC lento, e-mail suspeito e cabos.[/color]"""
 	_overlay_button.text = "[Enter] Bater o ponto (09:00)"
 	_overlay.visible = true
 

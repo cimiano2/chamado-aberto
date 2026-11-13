@@ -4,7 +4,9 @@ extends Node2D
 ## o desenho (sprite isométrico) é feito pelo OfficeMap.
 ## As setas/WASD seguem a direção NA TELA: cima = sobe na tela.
 
-@export var speed: float = 300.0
+## 339.4 un/s = exatamente 120 px/s na horizontal e 60 px/s na vertical da tela
+## (2 px e 1 px por quadro a 60 FPS): rolagem em pixels inteiros, sem tremor.
+@export var speed: float = 339.4
 ## Área dos pés usada na colisão (relativa à posição).
 const FEET := Rect2(-14, -6, 28, 14)
 const WALK_FPS := 8.0

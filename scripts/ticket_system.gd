@@ -13,20 +13,22 @@ const DAY_END := 18 * 60           # 18:00
 const DAY_SECONDS := 300.0         # duração real de um expediente
 const MAX_OPEN := 6
 
-## Tipos de chamado → script do minijogo e textos possíveis.
+## Tipos de chamado → script do minijogo e frases dos usuários (e dos alertas de servidor).
 const TYPES := {
-	"cpu": {"task": "res://scripts/tasks/task_scheduling.gd", "titles": [
-		"Meu computador está muito lento", "Os programas ficam travando", "A planilha congela quando abro o ERP"]},
-	"paging": {"task": "res://scripts/tasks/task_paging.gd", "titles": [
-		"Aparece 'memória insuficiente' toda hora", "O PC fica trocando com o disco sem parar", "O sistema engasga com muitas abas abertas"]},
-	"deadlock": {"task": "res://scripts/tasks/task_banker.gd", "titles": [
-		"Dois sistemas travaram esperando um pelo outro", "A impressora e o ERP travaram juntos", "O fechamento do mês parou e não sai do lugar"]},
-	"disk": {"task": "res://scripts/tasks/task_disk.gd", "titles": [
-		"O servidor de arquivos está lento", "Salvar arquivo na rede demora minutos", "O backup está demorando demais"]},
-	"chmod": {"task": "res://scripts/tasks/task_chmod.gd", "titles": [
-		"Não consigo acessar a pasta do setor", "Diz 'permissão negada' no arquivo", "Preciso que o estagiário só leia o relatório"]},
-	"alloc": {"task": "res://scripts/tasks/task_alloc.gd", "titles": [
-		"O programa novo não abre por falta de memória", "Preciso abrir três sistemas ao mesmo tempo", "O software de projeto fecha sozinho"]},
+	"network": {"task": "res://scripts/tasks/task_network.gd", "titles": [
+		"Estou sem internet", "A rede caiu só aqui na minha mesa", "O sistema web não abre de jeito nenhum"],
+		"server_titles": ["Alerta: servidor sem resposta na rede", "Alerta: perda de conexão com o servidor"]},
+	"printer": {"task": "res://scripts/tasks/task_printer.gd", "titles": [
+		"A impressora não imprime", "Mandei imprimir e nada saiu", "A impressora está piscando uma luz laranja"]},
+	"password": {"task": "res://scripts/tasks/task_password.gd", "titles": [
+		"Esqueci minha senha", "Minha conta foi bloqueada", "Minha senha expirou e não consigo trocar"]},
+	"slow": {"task": "res://scripts/tasks/task_taskmgr.gd", "titles": [
+		"Meu computador está muito lento", "O PC trava toda hora", "O ventilador do PC não para de fazer barulho"],
+		"server_titles": ["Alerta: CPU do servidor em 100%", "Alerta: servidor respondendo muito devagar"]},
+	"phishing": {"task": "res://scripts/tasks/task_phishing.gd", "titles": [
+		"Recebi uns e-mails estranhos", "Acho que caí num golpe por e-mail", "Pediram minha senha por e-mail, é normal?"]},
+	"cables": {"task": "res://scripts/tasks/task_cables.gd", "titles": [
+		"Mudei de mesa e nada funciona", "Meu PC novo chegou, pode instalar?", "O monitor e o teclado não ligam"]},
 }
 
 var rng := RandomNumberGenerator.new()
@@ -126,7 +128,7 @@ func spawn() -> Dictionary:
 	var d: int = free[rng.randi() % free.size()]
 	var desk: Dictionary = desks[d]
 	var kind: String = desk.kinds[rng.randi() % desk.kinds.size()]
-	var titles: Array = TYPES[kind].titles
+	var titles: Array = TYPES[kind].server_titles if desk.get("server", false) and TYPES[kind].has("server_titles") else TYPES[kind].titles
 	var t := {
 		"id": next_id, "desk": d, "kind": kind, "dept": desk.dept, "employee": desk.employee,
 		"title": titles[rng.randi() % titles.size()], "priority": desk.priority,

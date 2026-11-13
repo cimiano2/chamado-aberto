@@ -35,17 +35,12 @@ func _init() -> void:
 	player.facing = Vector2(-1, 1)
 	for i in 5: await process_frame
 	await _shot(out + "/frente_esq.png")
-	for kind in ["cpu", "paging", "deadlock", "disk", "chmod", "alloc"]:
+	for kind in TicketSystem.TYPES.keys():
 		var tk := {"id": 42, "desk": 0, "kind": kind, "dept": "Financeiro", "employee": "Carla",
 			"title": TicketSystem.TYPES[kind].titles[0], "priority": false, "sla_total": 999.0, "sla_left": 999.0}
 		ts.tickets.append(tk)
 		main._open_task(tk)
 		for i in 8: await process_frame
-		if kind == "paging":
-			for i in 20:
-				if main._task.waiting_choice: break
-				main._task._timer.stop(); main._task._step()
-			await process_frame
 		await _shot(out + "/task_%s.png" % kind)
 		main._cancel_task()
 		ts.tickets.erase(tk)

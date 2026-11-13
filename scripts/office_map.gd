@@ -14,12 +14,12 @@ const DEPT_NAMES := {"DIRETORIA": "Diretoria", "FINANCEIRO": "Financeiro", "RH":
 
 ## Salas alinhadas à grade (12 x 7 ladrilhos cada).
 var rooms: Array[Dictionary] = [
-	{"name": "DIRETORIA", "rect": Rect2(64, 64, 768, 448), "floor": "diretoria", "kinds": ["cpu", "chmod", "alloc", "paging"], "priority": true},
-	{"name": "FINANCEIRO", "rect": Rect2(896, 64, 768, 448), "floor": "financeiro", "kinds": ["chmod", "deadlock", "cpu", "alloc"], "priority": false},
-	{"name": "RH", "rect": Rect2(1728, 64, 768, 448), "floor": "rh", "kinds": ["chmod", "cpu", "paging", "alloc"], "priority": false},
+	{"name": "DIRETORIA", "rect": Rect2(64, 64, 768, 448), "floor": "diretoria", "kinds": ["password", "phishing", "printer", "cables"], "priority": true},
+	{"name": "FINANCEIRO", "rect": Rect2(896, 64, 768, 448), "floor": "financeiro", "kinds": ["printer", "network", "password", "slow"], "priority": false},
+	{"name": "RH", "rect": Rect2(1728, 64, 768, 448), "floor": "rh", "kinds": ["password", "phishing", "printer", "slow"], "priority": false},
 	{"name": "SUPORTE TI", "rect": Rect2(64, 832, 768, 448), "floor": "suporte", "kinds": [], "priority": false},
-	{"name": "MARKETING", "rect": Rect2(896, 832, 768, 448), "floor": "marketing", "kinds": ["alloc", "paging", "cpu", "chmod"], "priority": false},
-	{"name": "SERVIDORES", "rect": Rect2(1728, 832, 768, 448), "floor": "servidores", "kinds": ["disk", "deadlock", "paging", "disk"], "priority": false},
+	{"name": "MARKETING", "rect": Rect2(896, 832, 768, 448), "floor": "marketing", "kinds": ["slow", "cables", "network", "phishing"], "priority": false},
+	{"name": "SERVIDORES", "rect": Rect2(1728, 832, 768, 448), "floor": "servidores", "kinds": ["network", "slow"], "priority": false},
 ]
 var hall := Rect2(64, 576, 2432, 192)
 var world_rect := Rect2(0, 0, 2560, 1344)
@@ -80,6 +80,11 @@ const C_WINDOW := Color("2ce8f5")
 const C_WINDOW_D := Color("0099db")
 
 
+## Projeção sem arredondar (para câmera e posições na tela cheia).
+static func iso_f(p: Vector2, z: float = 0.0) -> Vector2:
+	return Vector2((p.x - p.y) / 4.0, (p.x + p.y) / 8.0 - z)
+
+
 static func iso(p: Vector2, z: float = 0.0) -> Vector2:
 	return Vector2(roundf((p.x - p.y) / 4.0), roundf((p.x + p.y) / 8.0 - z))
 
@@ -97,7 +102,7 @@ func build() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 2024   # layout fixo; só os chamados variam
 	var names := FIRST_NAMES.duplicate()
-	OSLogic._shuffle(names, rng)
+	Helpdesk.shuffle(names, rng)
 	var look_i := 0
 	for room in rooms:
 		var r: Rect2 = room.rect
@@ -219,12 +224,6 @@ func _draw_static() -> void:
 		_iso_box(ci, w, WALL_HIGH if high else WALL_LOW, C_WALL_TOP, C_WALL_L, C_WALL_R)
 		if high and w.position.y < 64:
 			_draw_windows(ci, w)
-	# nomes das salas pintados no piso
-	var font: Font = ThemeDB.get_project_theme().default_font
-	for room in rooms:
-		var p := iso(room.rect.position + Vector2(48, 48))
-		ci.draw_string_outline(font, p + Vector2(-6, 4), room.name, HORIZONTAL_ALIGNMENT_LEFT, -1, 8, 2, Color(0, 0, 0, 0.35))
-		ci.draw_string(font, p + Vector2(-6, 4), room.name, HORIZONTAL_ALIGNMENT_LEFT, -1, 8, Color(1, 1, 1, 0.8))
 
 
 func _draw_tiles(ci: CanvasItem, r: Rect2, tex: Texture2D) -> void:

@@ -10,10 +10,15 @@
 script = ExtResource("1_main")
 
 [node name="WorldView" type="SubViewportContainer" parent="."]
+unique_name_in_owner = true
 texture_filter = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = -4.0
+offset_top = -4.0
+offset_right = 4.0
+offset_bottom = 4.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
@@ -26,7 +31,7 @@ handle_input_locally = false
 snap_2d_transforms_to_pixel = true
 snap_2d_vertices_to_pixel = true
 canvas_item_default_texture_filter = 0
-size = Vector2i(640, 360)
+size = Vector2i(644, 364)
 render_target_update_mode = 4
 
 [node name="Backdrop" type="ColorRect" parent="WorldView/SubViewport"]
@@ -51,10 +56,17 @@ script = ExtResource("4_guide")
 
 [node name="Camera2D" type="Camera2D" parent="WorldView/SubViewport"]
 unique_name_in_owner = true
-position_smoothing_enabled = true
-position_smoothing_speed = 8.0
 
 [node name="HUD" type="CanvasLayer" parent="."]
+
+[node name="RoomLabels" type="Control" parent="HUD"]
+unique_name_in_owner = true
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
 
 [node name="TopBar" type="PanelContainer" parent="HUD"]
 offset_left = 16.0

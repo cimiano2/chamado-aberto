@@ -1,6 +1,6 @@
 # Chamado Aberto
 
-Jogo 2D educativo em **pixel art isométrica**, feito em **Godot 4.3**. Você é o **técnico de TI** do 7º andar de uma grande empresa: anda pelo escritório **com o teclado**, chega nas mesas com chamado aberto e resolve o problema antes que o prazo (SLA) estoure. Cada problema é um conceito de **sistemas operacionais**.
+Jogo 2D educativo em **pixel art isométrica**, feito em **Godot 4.3**. Você é o **técnico de TI** do 7º andar de uma grande empresa: anda pelo escritório **com o teclado**, chega nas mesas com chamado aberto e resolve o problema antes que o prazo (SLA) estoure. Os problemas são os do **dia a dia de um técnico de suporte**.
 
 ![Escritório](docs/jogo.png)
 
@@ -23,18 +23,18 @@ Jogo 2D educativo em **pixel art isométrica**, feito em **Godot 4.3**. Você é
 
 ## Os chamados
 
-![Minijogo de paginação](docs/minijogo.png)
+![Minijogo](docs/minijogo.png)
 
-| Chamado | Minijogo | Conceito de SO |
+| O usuário diz | Minijogo | O que se aprende |
 |---|---|---|
-| "Meu computador está muito lento" | escolher a ordem de execução | Escalonamento de CPU: **FCFS, SJF, Prioridade** |
-| "Aparece 'memória insuficiente'" | escolher a página que sai | Substituição de páginas: **FIFO, LRU, Ótimo** |
-| "Dois sistemas travaram esperando um pelo outro" | achar uma sequência segura | Deadlock: **algoritmo do banqueiro** |
-| "O servidor de arquivos está lento" | atender os cilindros na ordem | Escalonamento de disco: **SSTF, LOOK, C-LOOK** |
-| "Não consigo acessar a pasta" | marcar rwx de dono/grupo/outros | Permissões **chmod** (octal e simbólico) |
-| "O programa não abre por falta de memória" | escolher a lacuna | Alocação contígua: **First, Best, Worst fit** |
+| "Estou sem internet" | ler a saída do `ipconfig`/`ping` e apontar a causa | cabo solto, DHCP (169.254.x.x), DNS, gateway, modo avião, IP duplicado |
+| "A impressora não imprime" | ler o painel e aplicar só o que resolve | papel atolado, sem papel, toner, offline, fila travada |
+| "Esqueci minha senha" | confirmar a identidade e escolher uma senha válida | política de senha forte e boas práticas de segurança |
+| "Meu PC está lento" | Gerenciador de Tarefas: finalizar só o que pesa | não fechar processos do Windows nem o antivírus |
+| "Recebi e-mails estranhos" | classificar e-mails como legítimos ou golpe | sinais de phishing |
+| "Mudei de mesa e nada funciona" | ligar cada equipamento na porta certa | HDMI, USB, RJ45, P2, VGA e energia |
 
-Os valores são sorteados a cada atendimento. Quando você erra, o jogo explica **por que** a resposta não segue o algoritmo.
+Os casos são sorteados a cada atendimento e, quando você erra, o jogo explica o porquê.
 
 ## Rodando
 
@@ -47,9 +47,12 @@ Os valores são sorteados a cada atendimento. Quando você erra, o jogo explica 
 godot --headless --path . --import
 godot --headless --path . -s tests/test_logic.gd
 godot --headless --path . -s tests/test_game.gd
+godot --headless --path . -s tests/test_camera.gd
 ```
 
-`test_logic.gd` confere os algoritmos contra os exemplos clássicos do livro (ex.: FIFO = 15 faltas, LRU = 12, Ótimo = 9; SSTF = 236 cilindros). `test_game.gd` abre cada tipo de chamado e o resolve **pelo teclado**, inclusive com um erro proposital.
+- `test_logic.gd`: política de senha e consistência dos dados dos chamados.
+- `test_game.gd`: abre cada tipo de chamado e o resolve **pelo teclado**, inclusive com um erro proposital; testa fim do dia e fim de jogo.
+- `test_camera.gd`: segura as setas e mede, quadro a quadro, que o técnico fica fixo na tela e o cenário rola sem tremer.
 
 ## Pixel art
 
@@ -85,7 +88,7 @@ scripts/office_map.gd         andar: salas, mesas, colisão e desenho isométric
 scripts/player.gd             técnico controlado pelo teclado (direções da tela → mundo)
 scripts/guide.gd              seta para o chamado mais urgente
 scripts/minimap.gd            minimapa
-scripts/os_logic.gd           algoritmos de SO (puros, testados)
+scripts/helpdesk.gd           conteúdo e regras dos chamados (testados)
 scripts/tasks/task_base.gd    base dos minijogos (teclas 1–9 / Enter)
 scripts/tasks/task_*.gd       os seis minijogos
 art/                          scripts que geram a pixel art (fonte dos sprites)

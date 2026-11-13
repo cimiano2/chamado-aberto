@@ -40,10 +40,11 @@ jobs:
       - name: Importar projeto
         run: ./godot --headless --path . --import || true
 
-      - name: Testes da simulação
+      - name: Testes
         run: |
           ./godot --headless --path . -s tests/test_logic.gd
           ./godot --headless --path . -s tests/test_game.gd
+          ./godot --headless --path . -s tests/test_camera.gd
 
       - name: Exportar para Web
         run: |
