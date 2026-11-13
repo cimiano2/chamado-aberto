@@ -31,6 +31,11 @@ var _balloons: Balloons
 var _name_tag: Label
 var _combo_label: Label
 var _overlay_button2: Button
+var _pause_sound_row: HBoxContainer
+var _btn_ambient: Button
+var _btn_sfx: Button
+var _pause_button: Button
+var _confirm_menu := false
 var _chat_cooldown := {}         # mesa -> segundos até poder falar de novo
 var _step_t := 0.0
 
@@ -77,6 +82,37 @@ func _ready() -> void:
 	_overlay_button2.focus_mode = Control.FOCUS_NONE
 	_overlay_button2.pressed.connect(_on_overlay_secondary)
 	_overlay_button.get_parent().add_child(_overlay_button2)
+	_pause_sound_row = HBoxContainer.new()
+	_pause_sound_row.add_theme_constant_override("separation", 10)
+	_btn_ambient = Button.new()
+	_btn_ambient.focus_mode = Control.FOCUS_NONE
+	_btn_ambient.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_btn_ambient.pressed.connect(func():
+		_audio.set_music(not _audio.music_on)
+		_show_pause())
+	_btn_sfx = Button.new()
+	_btn_sfx.focus_mode = Control.FOCUS_NONE
+	_btn_sfx.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_btn_sfx.pressed.connect(func():
+		_audio.set_sfx(not _audio.sfx_on)
+		_show_pause())
+	_pause_sound_row.add_child(_btn_ambient)
+	_pause_sound_row.add_child(_btn_sfx)
+	_overlay_button.get_parent().add_child(_pause_sound_row)
+	_pause_sound_row.visible = false
+	# botão de pausa sempre visível durante o jogo (canto inferior esquerdo)
+	_pause_button = Button.new()
+	_pause_button.text = "||  Pausa / Menu  (P)"
+	_pause_button.focus_mode = Control.FOCUS_NONE
+	_pause_button.add_theme_font_size_override("font_size", 16)
+	_room_labels.get_parent().add_child(_pause_button)
+	_pause_button.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
+	_pause_button.position = Vector2(16, 720 - 60)
+	_pause_button.pressed.connect(func():
+		if state == State.PLAYING:
+			_show_pause()
+		elif state == State.PAUSED:
+			_on_overlay_action())
 	_audio = Audio.new()
 	add_child(_audio)
 	_balloons = Balloons.new()
@@ -210,6 +246,7 @@ func _update_camera() -> void:
 		# placa fica quase transparente quando o personagem passa por trás dela
 		node.modulate.a = 0.25 if Rect2(node.position, node.size).intersects(me) else 1.0
 	_name_tag.visible = state != State.TITLE
+	_pause_button.visible = state == State.PLAYING
 	_name_tag.position = (_to_screen(OfficeMap.iso_f(_player.position)) + Vector2(-_name_tag.size.x / 2.0, 6)).round()
 
 
@@ -359,7 +396,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if k in [KEY_M, KEY_N] and state != State.TITLE:
 		if k == KEY_M:
 			_audio.set_music(not _audio.music_on)
-			_show_toast("Música %s (M)" % ("ligada" if _audio.music_on else "desligada"), Color("c0cbdc"))
+			_show_toast("Som ambiente %s (M)" % ("ligado" if _audio.music_on else "desligado"), Color("c0cbdc"))
 		else:
 			_audio.set_sfx(not _audio.sfx_on)
 			_show_toast("Efeitos sonoros %s (N)" % ("ligados" if _audio.sfx_on else "desligados"), Color("c0cbdc"))
@@ -378,6 +415,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		State.DAY_END, State.PAUSED:
 			if k in [KEY_ENTER, KEY_KP_ENTER, KEY_SPACE] or (state == State.PAUSED and k in [KEY_P, KEY_ESCAPE]):
 				_on_overlay_action()
+			elif k == KEY_Q and state == State.PAUSED:
+				_on_overlay_secondary()
 			elif k == KEY_R and state == State.DAY_END:
 				_on_overlay_secondary()
 		State.TASK:
@@ -573,17 +612,27 @@ func download_report() -> String:
 
 func _show_pause() -> void:
 	state = State.PAUSED
-	_overlay_text.text = "[color=#2ce8f5][font_size=28]PAUSA PARA O CAFÉ[/font_size][/color]\n\nO relógio parou. Aperte [b]P[/b], [b]Esc[/b] ou [b]Enter[/b] para voltar.\n\n[b]M[/b]  Música: %s\n[b]N[/b]  Efeitos sonoros: %s" % [
-		"[color=#63c74d]ligada[/color]" if _audio.music_on else "[color=#e43b44]desligada[/color]",
-		"[color=#63c74d]ligados[/color]" if _audio.sfx_on else "[color=#e43b44]desligados[/color]"]
-	_overlay_button.text = "[Enter] Voltar ao trabalho"
-	_overlay_button2.visible = false
+	_overlay_text.text = """[color=#2ce8f5][font_size=28]PAUSA PARA O CAFÉ[/font_size][/color]
+[color=#c0cbdc]%s · Dia %d · %s · %d pontos[/color]
+
+O relógio parou. Aperte [b]P[/b], [b]Esc[/b] ou [b]Enter[/b] para continuar.
+%s""" % [profile.name, tickets.day, tickets.clock_text(), tickets.score,
+		"\n[color=#feae34]Tem certeza? O expediente de hoje recomeça das 09:00 quando você continuar a sessão.%s[/color]" % (
+			" Na avaliação, isso fica registrado no relatório." if mode == "avaliacao" else "") if _confirm_menu else ""]
+	_overlay_button.text = "[Enter] Continuar jogando"
+	_overlay_button2.text = "Sim, voltar ao menu inicial" if _confirm_menu else "[Q] Voltar ao menu inicial"
+	_overlay_button2.visible = true
+	_btn_ambient.text = "Som ambiente: %s (M)" % ("ligado" if _audio.music_on else "desligado")
+	_btn_sfx.text = "Efeitos: %s (N)" % ("ligados" if _audio.sfx_on else "desligados")
+	_pause_sound_row.visible = true
 	_overlay.visible = true
 
 
 func _on_overlay_action() -> void:
+	_pause_sound_row.visible = false
 	match state:
 		State.PAUSED:
+			_confirm_menu = false
 			state = State.PLAYING
 		State.DAY_END:
 			_begin_day(tickets.day + 1)
@@ -597,12 +646,29 @@ func _on_overlay_action() -> void:
 
 func _on_overlay_secondary() -> void:
 	match state:
+		State.PAUSED:
+			if not _confirm_menu:
+				_confirm_menu = true
+				_show_pause()
+				return
+			back_to_menu()
 		State.DAY_END:
 			download_report()
 		State.FINAL:
 			_overlay.visible = false
 			_new_tickets(-1)
 			_show_menu()
+
+
+## Volta ao menu inicial. A sessão continua salva (do início do dia atual) para "Continuar".
+func back_to_menu() -> void:
+	_confirm_menu = false
+	_close_task()
+	_balloons.clear()
+	_overlay.visible = false
+	_pause_sound_row.visible = false
+	_new_tickets(-1)
+	_show_menu()
 
 
 func _show_toast(text: String, color: Color) -> void:

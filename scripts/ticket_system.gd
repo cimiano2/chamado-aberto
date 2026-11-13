@@ -29,6 +29,17 @@ const TYPES := {
 		"Recebi uns e-mails estranhos", "Acho que caí num golpe por e-mail", "Pediram minha senha por e-mail, é normal?"]},
 	"cables": {"task": "res://scripts/tasks/task_cables.gd", "titles": [
 		"Mudei de mesa e nada funciona", "Meu PC novo chegou, pode instalar?", "O monitor e o teclado não ligam"]},
+	"files": {"task": "res://scripts/tasks/task_files.gd", "titles": [
+		"Apaguei um arquivo importante sem querer", "Meu relatório sumiu!", "Salvei por cima da planilha certa"]},
+	"install": {"task": "res://scripts/tasks/task_install.gd", "titles": [
+		"Preciso instalar um programa", "Pode instalar um programa pra mim?", "O programa novo não quer instalar"]},
+	"cleanup": {"task": "res://scripts/tasks/task_cleanup.gd", "titles": [
+		"Aparece 'disco cheio' no meu PC", "Não consigo salvar, diz que falta espaço", "O disco C: está no vermelho"],
+		"server_titles": ["Alerta: disco do servidor 98% cheio"]},
+	"extensions": {"task": "res://scripts/tasks/task_extensions.gd", "titles": [
+		"Não consigo abrir um arquivo que recebi", "Esse arquivo abre com qual programa?", "Recebi um arquivo .zip, e agora?"]},
+	"shortcuts": {"task": "res://scripts/tasks/task_shortcuts.gd", "titles": [
+		"Como faço para copiar e colar mais rápido?", "Quero aprender atalhos do teclado", "Como bloqueio o PC quando saio da mesa?"]},
 }
 
 var rng := RandomNumberGenerator.new()
@@ -56,6 +67,7 @@ var history: Array[Dictionary] = []    # um registro por chamado (vai para o rel
 var stats := {}                    # tipo -> {resolved, clean, mistakes, expired}
 var play_seconds := 0.0
 var _work := {}                    # id -> segundos gastos atendendo
+var recent_kinds: Array[String] = [] # últimos tipos sorteados (evita repetir em seguida)
 
 
 func _init(desk_list: Array, seed_value: int = -1) -> void:
@@ -141,7 +153,7 @@ func spawn() -> Dictionary:
 		return {}
 	var d: int = free[rng.randi() % free.size()]
 	var desk: Dictionary = desks[d]
-	var kind: String = desk.kinds[rng.randi() % desk.kinds.size()]
+	var kind := pick_kind(desk.kinds)
 	var titles: Array = TYPES[kind].server_titles if desk.get("server", false) and TYPES[kind].has("server_titles") else TYPES[kind].titles
 	var t := {
 		"id": next_id, "desk": d, "kind": kind, "dept": desk.dept, "employee": desk.employee,
@@ -152,6 +164,21 @@ func spawn() -> Dictionary:
 	tickets.append(t)
 	ticket_opened.emit(t)
 	return t
+
+
+## Sorteia o tipo de chamado evitando os 4 últimos (e os que já estão abertos).
+func pick_kind(kinds: Array) -> String:
+	var open := tickets.map(func(t): return t.kind)
+	var fresh := kinds.filter(func(k): return not recent_kinds.has(k) and not open.has(k))
+	if fresh.is_empty():
+		fresh = kinds.filter(func(k): return not open.has(k))
+	if fresh.is_empty():
+		fresh = kinds
+	var kind: String = fresh[rng.randi() % fresh.size()]
+	recent_kinds.append(kind)
+	while recent_kinds.size() > 4:
+		recent_kinds.pop_front()
+	return kind
 
 
 func ticket_at_desk(desk_index: int) -> Dictionary:

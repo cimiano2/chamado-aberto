@@ -321,7 +321,7 @@ func _refresh() -> void:
 		st.set_content_margin_all(12)
 		_mode_cards[key].add_theme_stylebox_override("panel", st)
 	if audio:
-		_music_btn.text = "Música: %s  (M)" % ("ligada" if audio.music_on else "desligada")
+		_music_btn.text = "Som ambiente: %s  (M)" % ("ligado" if audio.music_on else "desligado")
 		_sfx_btn.text = "Efeitos: %s  (N)" % ("ligados" if audio.sfx_on else "desligados")
 
 
@@ -370,7 +370,7 @@ func _show_board() -> void:
 func _show_help() -> void:
 	_open_popup("COMO JOGAR", """[color=#feae34]Andar:[/color] WASD ou setas  ·  [color=#feae34]Atender:[/color] E (na frente da mesa com [b]![/b])
 [color=#feae34]Responder:[/color] teclas 1–9 e Enter (ou o mouse)  ·  [color=#feae34]Sair do atendimento:[/color] Esc
-[color=#feae34]Pausa:[/color] P  ·  [color=#feae34]Música:[/color] M  ·  [color=#feae34]Efeitos:[/color] N
+[color=#feae34]Pausa:[/color] P ou Esc  ·  [color=#feae34]Som ambiente:[/color] M  ·  [color=#feae34]Efeitos:[/color] N
 
 A seta amarela aponta o chamado mais urgente. Cada chamado tem um prazo:
 se ele estourar, a satisfação dos usuários cai e você perde pontos.

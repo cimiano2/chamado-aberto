@@ -8,6 +8,8 @@ const SALT := "papeis-horizonte/chamado-aberto"
 const KIND_NAMES := {
 	"hardware": "Defeito de hardware", "printer": "Impressora", "password": "Troca de senha",
 	"slow": "PC lento (Gerenciador de Tarefas)", "phishing": "E-mail suspeito", "cables": "Conectar cabos",
+	"files": "Arquivo sumiu", "install": "Instalar programa", "cleanup": "Disco cheio",
+	"extensions": "Abrir arquivo (extensões)", "shortcuts": "Atalhos de teclado",
 }
 
 

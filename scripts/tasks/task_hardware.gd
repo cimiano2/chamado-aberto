@@ -40,7 +40,7 @@ func build() -> void:
 
 
 func _new_round() -> void:
-	var idx := rng.randi() % Helpdesk.HARDWARE.size()
+	var idx: int = Helpdesk.pick_fresh("hardware", Helpdesk.HARDWARE.size(), 1, rng)[0]
 	while _used.has(idx):
 		idx = rng.randi() % Helpdesk.HARDWARE.size()
 	_used.append(idx)

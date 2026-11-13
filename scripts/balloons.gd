@@ -14,6 +14,11 @@ var _items: Array = []      # {node, anchor: Callable -> Vector2 (iso), age, lif
 
 
 func say(speaker: String, text: String, anchor: Callable, color := Color("262b44")) -> void:
+	# a mesma fala da mesma pessoa só renova o balão que já está na tela
+	for it in _items:
+		if it.speaker == speaker and it.get("text", "") == text:
+			it.age = 0.0
+			return
 	# empurra para cima as falas anteriores do mesmo personagem
 	var panel := PanelContainer.new()
 	var style := StyleBoxFlat.new()
@@ -54,7 +59,7 @@ func say(speaker: String, text: String, anchor: Callable, color := Color("262b44
 	for it in _items:
 		if it.speaker == speaker:
 			it.lift += 42.0
-	_items.append({"node": panel, "anchor": anchor, "age": 0.0, "lift": 0.0, "speaker": speaker, "tail": tail})
+	_items.append({"node": panel, "anchor": anchor, "age": 0.0, "lift": 0.0, "speaker": speaker, "tail": tail, "text": text})
 	# no máximo 6 balões na tela
 	while _items.size() > 6:
 		_items[0].node.queue_free()

@@ -65,6 +65,10 @@ func _init() -> void:
 		await _shot(out + "/task_%s.png" % kind)
 		main._cancel_task()
 		ts.tickets.erase(tk)
+	main._show_pause()
+	for i in 6: await process_frame
+	await _shot(out + "/pausa.png")
+	main._on_overlay_action()
 	# resultado final
 	for i in 6:
 		var t := ts.spawn()

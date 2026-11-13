@@ -151,7 +151,8 @@ func build() -> void:
 	var names := NAMES.duplicate()
 	var look := 0
 	var vendas := room_rect("VENDAS")
-	var all_kinds := ["slow", "printer", "password", "phishing", "cables", "hardware"]
+	var all_kinds := ["slow", "printer", "password", "phishing", "cables", "hardware",
+		"files", "install", "cleanup", "extensions", "shortcuts"]
 
 	# ---- Área de vendas: 2 fileiras de 3 mesas, recepção com sala de espera, copiadora e arquivos
 	for row in 2:
@@ -160,21 +161,21 @@ func build() -> void:
 			_add_desk("desk", c, "Vendas", names.pop_front(), all_kinds, false, look)
 			look += 3
 	_add_desk("reception", Vector2(vendas.position.x + 200, vendas.end.y - 120), "Recepção",
-		names.pop_front(), ["printer", "phishing", "password"], false, look)
+		names.pop_front(), ["printer", "phishing", "password", "shortcuts", "files", "extensions"], false, look)
 	look += 3
 	_add_prop("sofa", Vector2(vendas.position.x + 520, vendas.end.y - 50))
 	_add_prop("plant", Vector2(vendas.position.x + 650, vendas.end.y - 40))
 	_add_prop("copier", Vector2(vendas.end.x - 70, vendas.end.y - 100))
-	_add_prop("filing", Vector2(vendas.end.x - 40, vendas.end.y - 220))
+	_add_prop("filing", Vector2(vendas.end.x - 170, vendas.end.y - 30))
 	for k in 3:
 		_add_prop("filing", Vector2(vendas.position.x + 30, vendas.position.y + 130 + k * 48))
 	_add_prop("plant", Vector2(vendas.position.x + 36, vendas.end.y - 40))
-	_add_prop("plant", Vector2(vendas.end.x - 36, vendas.position.y + 36))
+	_add_prop("plant", Vector2(vendas.position.x + 600, vendas.position.y + 36))
 
 	# ---- Gerência (vidro): mesa do gerente, sofá, planta, arquivo
 	var ger := room_rect("GERÊNCIA")
 	_add_desk("desk", ger.get_center() + Vector2(-10, -20), "Gerência", "Gerente " + names.pop_front(),
-		["password", "phishing", "slow", "printer"], true, look)
+		["password", "phishing", "slow", "printer", "files", "install", "extensions"], true, look)
 	look += 3
 	_add_prop("sofa", Vector2(ger.position.x + 110, ger.end.y - 50))
 	_add_prop("plant", ger.position + Vector2(36, 36))
@@ -183,7 +184,7 @@ func build() -> void:
 	# ---- Reunião (vidro): mesa grande; chamados de projetor/cabos
 	var reu := room_rect("REUNIÃO")
 	_add_desk("conference_table", reu.get_center() + Vector2(0, -16), "Sala de reunião",
-		names.pop_front(), ["cables", "hardware"], false, -1)
+		names.pop_front(), ["cables", "hardware", "extensions", "install"], false, -1)
 	_add_prop("plant", reu.position + Vector2(36, 36))
 
 	# ---- Copa: bancada, geladeira, mesa e bebedouro (sem chamados)
@@ -202,7 +203,7 @@ func build() -> void:
 	props.append({"kind": "desk_empty", "center": tdesk, "look": 0})
 	obstacles.append(Rect2(tdesk - FOOT["desk"] / 2, FOOT["desk"]))
 	_add_prop("plant", Vector2(ti.end.x - 36, ti.end.y - 36))
-	_add_prop("filing", Vector2(ti.position.x + 30, ti.end.y - 60))
+	_add_prop("filing", Vector2(ti.position.x + 30, ti.position.y + 150))
 
 	# ---- Corredor: máquina de lanches, bebedouro e plantas encostados nas paredes
 	var cor := room_rect("CORREDOR")
@@ -215,12 +216,12 @@ func build() -> void:
 
 	# ---- RH e Contabilidade: 2 mesas da contabilidade + 1 do RH, arquivos
 	var cont := room_rect("RH E CONTABILIDADE")
-	var cont_kinds := ["slow", "printer", "password", "hardware", "phishing"]
-	for c in [Vector2(cont.position.x + 125, cont.position.y + 110), Vector2(cont.position.x + 335, cont.position.y + 110)]:
+	var cont_kinds := ["slow", "printer", "password", "hardware", "phishing", "cleanup", "extensions", "shortcuts", "files"]
+	for c in [Vector2(cont.position.x + 150, cont.position.y + 110), Vector2(cont.position.x + 360, cont.position.y + 110)]:
 		_add_desk("desk", c, "Contabilidade", names.pop_front(), cont_kinds, false, look)
 		look += 3
 	_add_desk("desk", Vector2(cont.position.x + 230, cont.position.y + 270), "RH", names.pop_front(),
-		["password", "phishing", "printer"], false, look)
+		["password", "phishing", "printer", "files", "shortcuts", "install"], false, look)
 	look += 3
 	_add_prop("filing", Vector2(cont.end.x - 26, cont.end.y - 120))
 	_add_prop("filing", Vector2(cont.end.x - 26, cont.end.y - 70))
@@ -234,7 +235,7 @@ func build() -> void:
 		var rect := Rect2(c - FOOT["rack"] / 2, FOOT["rack"])
 		obstacles.append(rect)
 		desks.append({"pos": Vector2(c.x, rect.end.y + 40), "rect": rect, "center": c, "dept": "Servidores",
-			"employee": "Servidor %s" % rack_names[k], "kinds": ["hardware", "slow"],
+			"employee": "Servidor %s" % rack_names[k], "kinds": ["hardware", "slow", "cleanup"],
 			"priority": false, "server": true, "look": -1, "sprite": "rack"})
 	_add_prop("ups", Vector2(srv.position.x + 90, srv.end.y - 40))
 	_add_prop("ups", Vector2(srv.position.x + 150, srv.end.y - 40))
@@ -312,10 +313,10 @@ func desk_index_near(pos: Vector2, radius: float = 80.0) -> int:
 	return best
 
 
-## Ponto acima da cabeça de quem está na mesa (para balões de fala).
+## Ponto acima da cabeça de quem está na mesa (para balões de fala, acima do "!").
 func speaker_point(i: int) -> Vector2:
 	var d: Dictionary = desks[i]
-	return iso_f(d.center + Vector2(24, -44), 46 if not d.server else 66)
+	return iso_f(d.center + Vector2(24, -44), 74 if not d.server else 94)
 
 
 func iso_bounds() -> Rect2:
@@ -374,10 +375,10 @@ func _draw() -> void:
 			"rack":
 				items.append([c.x + c.y, _draw_sprite.bind("rack_alert" if alert else "rack", c)])
 			"desk":
-				items.append([c.x + c.y - 60, _draw_worker.bind(c, d.look, Vector2(24, -44))])
+				items.append([c.x + c.y - 60, _draw_worker.bind(c, d.look, Vector2(24, -44), alert)])
 				items.append([c.x + c.y, _draw_sprite.bind("desk_alert" if alert else "desk", c)])
 			"reception":
-				items.append([c.x + c.y - 60, _draw_worker.bind(c, d.look, Vector2(30, -50))])
+				items.append([c.x + c.y - 60, _draw_worker.bind(c, d.look, Vector2(30, -50), alert)])
 				items.append([c.x + c.y, _draw_sprite.bind("reception", c)])
 			_:
 				items.append([c.x + c.y, _draw_sprite.bind(d.sprite, c)])
@@ -391,6 +392,9 @@ func _draw() -> void:
 	if player:
 		items.append([player.position.x + player.position.y, _draw_player])
 	items.sort_custom(func(a, b): return a[0] < b[0])
+	# anel pulsante no chão em volta de quem pediu ajuda (desenhado antes dos móveis)
+	for i in ticket_desks:
+		_draw_ring(i)
 	for it in items:
 		it[1].call()
 	for i in ticket_desks:
@@ -473,10 +477,35 @@ func _draw_chair(c: Vector2) -> void:
 	draw_texture(TEX_CHAIR, iso(c + Vector2(24, -52)) - Vector2(11, 25))
 
 
-func _draw_worker(c: Vector2, look: int, off: Vector2) -> void:
+## Funcionário sentado; com chamado aberto, levanta a mão e acena (quadros 1 e 2 da folha).
+func _draw_worker(c: Vector2, look: int, off: Vector2, waving := false) -> void:
 	draw_texture(TEX_CHAIR, iso(c + off + Vector2(0, -8)) - Vector2(11, 25))
-	var pos := iso(c + off) - Vector2(10, 30)
-	draw_texture_rect_region(TEX_EMPLOYEES, Rect2(pos, Vector2(20, 24)), Rect2(maxi(look, 0) * 20, 0, 20, 24))
+	var pos := iso(c + off) - Vector2(11, 38)
+	var pose := 0
+	if waving:
+		pose = 1 + int(_time * 4.0) % 2
+	draw_texture_rect_region(TEX_EMPLOYEES, Rect2(pos, Vector2(22, 32)), Rect2((pose * 8 + maxi(look, 0)) * 22, 0, 22, 32))
+
+
+func _alert_color(i: int) -> Color:
+	var info: Dictionary = ticket_desks[i]
+	if info.urgency > 0.7:
+		return Color("e43b44")
+	return Color("b55088") if info.priority else Color("feae34")
+
+
+## Losango pulsante no chão, centrado em quem abriu o chamado (ou no rack).
+func _draw_ring(i: int) -> void:
+	var d: Dictionary = desks[i]
+	var c: Vector2 = d.center
+	var who: Vector2 = c if d.server or d.sprite == "conference_table" else c + Vector2(24, -40)
+	var pulse := 0.5 + 0.5 * sin(_time * 6.0)
+	var r := 44.0 + 10.0 * pulse
+	var pts := PackedVector2Array([iso(who + Vector2(-r, -r)), iso(who + Vector2(r, -r)), iso(who + Vector2(r, r)), iso(who + Vector2(-r, r))])
+	var col := _alert_color(i)
+	draw_colored_polygon(pts, Color(col, 0.18 + 0.12 * pulse))
+	pts.append(pts[0])
+	draw_polyline(pts, Color(col, 0.9), 1.0)
 
 
 func _draw_player() -> void:
@@ -493,15 +522,23 @@ func _draw_player() -> void:
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
 
+## Balão "!" em dobro do tamanho, sobre a cabeça de quem pediu ajuda, com a barrinha do prazo.
 func _draw_alert(i: int) -> void:
 	var d: Dictionary = desks[i]
 	var info: Dictionary = ticket_desks[i]
 	var key := "alert_urgent" if info.urgency > 0.7 else ("alert_high" if info.priority else "alert")
 	var bob := roundf(sin(_time * 5.0 + i) * 2.0)
-	var h := 66.0 if d.server else 56.0
-	var p := iso(d.center, h) + Vector2(0, bob)
-	draw_texture(TEX[key], p - ANCHOR[key])
+	var p: Vector2
+	if d.server:
+		p = iso(d.center, 72)
+	elif d.sprite == "conference_table":
+		p = iso(d.center, 44)
+	else:
+		p = iso(d.center + (Vector2(30, -50) if d.sprite == "reception" else Vector2(24, -44)), 50)
+	p += Vector2(0, bob)
+	var tex: Texture2D = TEX[key]
+	draw_texture_rect(tex, Rect2(p - ANCHOR[key] * 2.0, tex.get_size() * 2.0), false)
 	var left := 1.0 - float(info.urgency)
-	draw_rect(Rect2(p + Vector2(-6, 3), Vector2(12, 2)), C_OUT)
-	draw_rect(Rect2(p + Vector2(-6, 3), Vector2(roundf(12 * left), 2)),
+	draw_rect(Rect2(p + Vector2(-12, 3), Vector2(24, 3)), C_OUT)
+	draw_rect(Rect2(p + Vector2(-12, 3), Vector2(roundf(24 * left), 3)),
 		Color("63c74d") if left > 0.5 else (Color("feae34") if left > 0.25 else Color("e43b44")))

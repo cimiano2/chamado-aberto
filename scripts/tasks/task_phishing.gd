@@ -19,9 +19,9 @@ func _init() -> void:
 func build() -> void:
 	var phish := Helpdesk.EMAILS.filter(func(e): return e.phish)
 	var legit := Helpdesk.EMAILS.filter(func(e): return not e.phish)
-	Helpdesk.shuffle(phish, rng)
-	Helpdesk.shuffle(legit, rng)
-	emails = [phish[0], phish[1], legit[0]]
+	var pi := Helpdesk.pick_fresh("phish", phish.size(), 2, rng)
+	var li := Helpdesk.pick_fresh("legit", legit.size(), 1, rng)
+	emails = [phish[pi[0]], phish[pi[1]], legit[li[0]]]
 	Helpdesk.shuffle(emails, rng)
 	_counter = make_label("", &"MutedLabel")
 	add_child(_counter)

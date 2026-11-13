@@ -45,6 +45,49 @@ func _init() -> void:
 	check(Helpdesk.PROCESSES_ESSENTIAL.all(func(p): return p.cpu < 50), "processos essenciais não parecem culpados (CPU baixa)")
 	check(Helpdesk.PROCESSES_CULPRIT.all(func(p): return p.cpu >= 50), "processos culpados têm CPU alta")
 
+	# --- conteúdos novos
+	check(Helpdesk.FILES.all(func(f): return Helpdesk.FILE_OPTIONS.has(f.answer)), "arquivo sumiu: toda resposta está entre as opções")
+	check(Helpdesk.INSTALLS.all(func(i): return i.steps.size() == 5), "instalar: todo programa tem 5 passos")
+	var tot := 0.0
+	for it in Helpdesk.CLEANUP_SAFE:
+		tot += it.gb
+	check(tot > 15.0, "disco cheio: itens seguros liberam espaço suficiente")
+	check(Helpdesk.EXTENSIONS.all(func(e): return Helpdesk.EXT_PROGRAMS.has(e.program)), "extensões: todo programa existe")
+	var answers := {}
+	for sc in Helpdesk.SHORTCUTS:
+		answers[sc.a] = true
+	check(answers.size() == Helpdesk.SHORTCUTS.size(), "atalhos: respostas distintas")
+	check(Helpdesk.HARDWARE.size() >= 10 and Helpdesk.EMAILS.size() >= 12, "mais casos de hardware (%d) e e-mails (%d)" % [Helpdesk.HARDWARE.size(), Helpdesk.EMAILS.size()])
+
+	# --- variedade: casos e tipos não se repetem em seguida
+	var r := RandomNumberGenerator.new()
+	r.seed = 9
+	var last: Array[int] = []
+	var repeats := 0
+	for i in 60:
+		var pick: int = Helpdesk.pick_fresh("teste", 10, 1, r)[0]
+		if last.has(pick):
+			repeats += 1
+		last.append(pick)
+		if last.size() > 4:
+			last.pop_front()
+	check(repeats == 0, "um caso não volta nos 4 sorteios seguintes (60 sorteios)")
+	var ts := TicketSystem.new([], 3)
+	var kinds := TicketSystem.TYPES.keys()
+	var seq: Array[String] = []
+	for i in 60:
+		seq.append(ts.pick_kind(kinds))
+	var back := 0
+	for i in range(1, seq.size()):
+		for j in range(maxi(0, i - 4), i):
+			if seq[i] == seq[j]:
+				back += 1
+	check(back == 0, "tipo de chamado não se repete nos 4 seguintes")
+	var distinct := {}
+	for k in seq:
+		distinct[k] = true
+	check(distinct.size() == kinds.size(), "todos os %d tipos aparecem em 60 chamados" % kinds.size())
+
 	# --- todo tipo de chamado aponta para um minijogo que existe
 	for kind in TicketSystem.TYPES:
 		check(ResourceLoader.exists(TicketSystem.TYPES[kind].task), "chamado '%s' tem minijogo" % kind)

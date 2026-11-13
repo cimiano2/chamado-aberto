@@ -22,13 +22,14 @@ Jogo 2D educativo em **pixel art isométrica**, feito em **Godot 4.3**. Você é
 | `E` (ou `Espaço`/`Enter`) | atender o chamado da mesa à sua frente |
 | `1`–`9` / `Enter` | escolher e confirmar dentro do atendimento |
 | `Esc` | sair do atendimento sem resolver |
-| `P` | pausa · `M` liga/desliga a música · `N` liga/desliga os efeitos |
+| `P` | pausa · `M` liga/desliga o som ambiente · `N` liga/desliga os efeitos |
 
-- A **música começa desligada**; música e efeitos sonoros têm chaves separadas no menu e na pausa.
+- Sem música: há um **som ambiente de escritório** (ar-condicionado, teclados, telefone ao longe), que pode ser desligado separadamente dos efeitos sonoros.
 - Na tela inicial o aluno digita o **nome**, o **código da turma** e escolhe **pele, cabelo e camisa** do personagem.
 - **Treino**: expedientes seguidos, a sessão é **salva** no início de cada dia (botão *Continuar*).
 - **Avaliação**: um expediente (5 min), no fim aparece a nota e o botão **Baixar relatório**.
-- Os funcionários falam em **balões** sobre a cabeça; a seta amarela aponta o chamado mais urgente.
+- Quem abre um chamado **levanta a mão e acena**, ganha um **"!" grande** sobre a cabeça e um destaque pulsante no chão; os funcionários falam em **balões**.
+- O botão **Pausa / Menu** (ou `P`/`Esc`) pausa o jogo; na pausa dá para **voltar ao menu inicial** (a sessão continua salva).
 
 ## Pontuação e avaliação
 
@@ -60,8 +61,13 @@ Jogo 2D educativo em **pixel art isométrica**, feito em **Godot 4.3**. Você é
 | "Meu PC está lento" | Gerenciador de Tarefas: finalizar só o que pesa | não fechar processos do Windows nem o antivírus |
 | "Recebi e-mails estranhos" | classificar e-mails como legítimos ou golpe | sinais de phishing |
 | "Mudei de mesa e nada funciona" | ligar cada equipamento na porta certa | HDMI, USB, RJ45, P2, VGA e energia |
+| "Apaguei um arquivo sem querer" | escolher como recuperar | Lixeira, versões anteriores, backup, busca, documentos não salvos |
+| "Preciso instalar um programa" | clicar nos passos na ordem e evitar armadilhas | site oficial, requisitos, administrador, sem crack nem "extras" |
+| "Aparece disco cheio" | marcar só o que pode ser apagado | temporários, lixeira, cache × documentos e pastas do sistema |
+| "Não consigo abrir o arquivo" | escolher o programa pela extensão | .docx, .xlsx, .pptx, .pdf, .png, .mp4, .zip, .txt, .csv, .odt |
+| "Quero aprender atalhos" | escolher o atalho certo | Ctrl+C/V/X/Z/S/P/A/F, Win+L, Alt+Tab, Ctrl+Shift+Esc... |
 
-Os casos são sorteados a cada atendimento e, quando você erra, o jogo explica o porquê.
+São **11 tipos** de chamado. O sorteio evita repetir o mesmo tipo nos 4 chamados seguintes, e dentro de cada tarefa os casos vistos recentemente ficam de fora. Quando você erra, o jogo explica o porquê.
 
 ## Rodando
 
@@ -92,7 +98,7 @@ pip install pillow
 python3 art/technician/build.py    # técnico: 3/4 frente e costas, 4 quadros de caminhada
 python3 art/employees/build.py     # 8 funcionários sentados + cadeira
 python3 art/office/build.py        # mobília (mesas, reunião, copa, copiadora, recepção...) e pisos
-python3 art/sfx/build.py           # efeitos sonoros e música chiptune (síntese, sem samples)
+python3 art/sfx/build.py           # efeitos sonoros e som ambiente de escritório (síntese, sem samples)
 ```
 
 Regras seguidas: paleta única **endesga32**, luz do alto-esquerda, contorno de 1 px, rampas com

@@ -1,15 +1,15 @@
 class_name Audio
 extends Node
-## Efeitos sonoros e música (assets/sfx, gerados por art/sfx/build.py).
-## Música e efeitos ligam/desligam separadamente; a música começa DESLIGADA.
-## Teclas no jogo: M = música, N = efeitos. A escolha fica salva.
+## Efeitos sonoros e som ambiente de escritório (assets/sfx, gerados por art/sfx/build.py).
+## Ambiente e efeitos ligam/desligam separadamente. Teclas: M = ambiente, N = efeitos.
+## A escolha fica salva.
 
 signal changed
 
 const SFX := ["click", "step", "ticket", "success", "error", "expired", "combo", "dayend", "open"]
 const PREF_PATH := "user://chamado_aberto_audio.cfg"
 
-var music_on := false
+var music_on := true      # som ambiente (ar-condicionado, teclados, telefone ao longe)
 var sfx_on := true
 var _streams := {}
 var _pool: Array[AudioStreamPlayer] = []
@@ -24,16 +24,16 @@ func _ready() -> void:
 		add_child(p)
 		_pool.append(p)
 	_music = AudioStreamPlayer.new()
-	var m: AudioStreamWAV = load("res://assets/sfx/music.wav")
+	var m: AudioStreamWAV = load("res://assets/sfx/ambient.wav")
 	m.loop_mode = AudioStreamWAV.LOOP_FORWARD
 	m.loop_begin = 0
 	m.loop_end = m.data.size() / 2
 	_music.stream = m
-	_music.volume_db = -12.0
+	_music.volume_db = -8.0
 	add_child(_music)
 	var cfg := ConfigFile.new()
 	if cfg.load(PREF_PATH) == OK:
-		music_on = cfg.get_value("audio", "music", false)
+		music_on = cfg.get_value("audio", "ambient", true)
 		sfx_on = cfg.get_value("audio", "sfx", true)
 
 
@@ -48,7 +48,7 @@ func play(name: String, volume_db := 0.0) -> void:
 			return
 
 
-## Chamado quando a partida começa: só toca se o jogador deixou a música ligada.
+## Chamado quando a partida começa: só toca se o jogador deixou o som ambiente ligado.
 func start_music() -> void:
 	if music_on and not _music.playing:
 		_music.play()
@@ -73,7 +73,7 @@ func set_sfx(on: bool) -> void:
 
 func _save() -> void:
 	var cfg := ConfigFile.new()
-	cfg.set_value("audio", "music", music_on)
+	cfg.set_value("audio", "ambient", music_on)
 	cfg.set_value("audio", "sfx", sfx_on)
 	cfg.save(PREF_PATH)
 	changed.emit()

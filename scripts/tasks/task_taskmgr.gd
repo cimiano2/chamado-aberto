@@ -18,6 +18,8 @@ func build() -> void:
 	Helpdesk.shuffle(nor, rng)
 	Helpdesk.shuffle(cul, rng)
 	var n_cul := rng.randi_range(1, 2)
+	var ci := Helpdesk.pick_fresh("culprit", cul.size(), n_cul, rng)
+	cul = ci.map(func(i): return Helpdesk.PROCESSES_CULPRIT[i])
 	for p in ess.slice(0, 3):
 		procs.append(_with_kind(p, "essential"))
 	for p in nor.slice(0, 3):

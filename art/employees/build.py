@@ -19,42 +19,64 @@ LOOKS = [(0, 0, 0, False), (1, 1, 1, True), (2, 0, 2, False), (0, 2, 3, True),
          (3, 3, 4, False), (1, 4, 5, True), (2, 1, 3, False), (0, 4, 1, True)]
 
 
-def draw(s, skin, hair, shirt, long_hair):
+W, H = 22, 32
+OX, OY = 1, 8          # deslocamento: espaço acima da cabeça para a mão levantada
+
+
+def draw(s, skin, hair, shirt, long_hair, pose):
+    """pose 0 = digitando; 1 e 2 = acenando (pedindo ajuda), com a boca aberta."""
     SK, SKD = skin
     H, HD, HL = hair
     SH, SHD = shirt
-    # cabelo comprido fica atrás dos ombros
+    R = lambda x0, y0, x1, y1, c, **k: s.rect(x0 + OX, y0 + OY, x1 + OX, y1 + OY, c, **k)
+    P = lambda x, y, c: s.px(x + OX, y + OY, c)
+    E = lambda x0, y0, x1, y1, c, **k: s.ellipse(x0 + OX, y0 + OY, x1 + OX, y1 + OY, c, **k)
+    L = lambda x0, y0, x1, y1, c: s.line(x0 + OX, y0 + OY, x1 + OX, y1 + OY, c)
     if long_hair:
-        s.rect(4, 6, 15, 16, HD)
-    # tronco com braços apoiados (antebraços na horizontal na base)
-    s.rect(4, 14, 15, 21, SH)
-    s.rect(12, 15, 15, 21, SHD)
-    s.rect(4, 20, 15, 21, SHD)
-    s.rect(3, 19, 7, 21, SH); s.rect(12, 19, 16, 21, SHD)
-    s.rect(6, 21, 8, 22, SK); s.rect(11, 21, 13, 22, SKD)          # mãos no teclado
-    s.rect(8, 14, 11, 14, SK); s.px(9, 15, SK); s.px(10, 15, SKD)   # decote
-    # cabeça (receita de forma deslocada)
-    s.ellipse(4, 1, 15, 13, SKD)
-    s.ellipse(4, 1, 14, 12, SK, only="opaque")
-    s.ellipse(4, 1, 15, 8, HD, only="opaque")
-    s.ellipse(4, 1, 14, 7, H, only="opaque")
-    s.rect(4, 5, 5, 10 if long_hair else 8, H, only="opaque")
-    s.rect(14, 5, 15, 10 if long_hair else 7, HD, only="opaque")
-    s.rect(7, 7, 13, 11, SK, only="opaque")
-    s.rect(14, 8, 14, 11, SKD, only="opaque")
-    s.px(8, 6, H); s.px(12, 6, H)
-    s.line(6, 3, 9, 2, HL)
-    s.rect(8, 8, 8, 9, OUT); s.rect(11, 8, 11, 9, OUT)               # olhos (olhando a tela)
-    s.px(10, 11, SKD)
+        R(4, 6, 15, 16, HD)
+    R(4, 14, 15, 21, SH)
+    R(12, 15, 15, 21, SHD)
+    R(4, 20, 15, 21, SHD)
+    R(3, 19, 7, 21, SH)
+    R(6, 21, 8, 22, SK)                                   # mão esquerda no teclado
+    if pose == 0:
+        R(12, 19, 16, 21, SHD); R(11, 21, 13, 22, SKD)     # mão direita no teclado
+    else:
+        # braço direito levantado, acenando (mão balança entre os quadros)
+        hx = 16 if pose == 1 else 18
+        L(15, 15, hx, 6, SH)
+        L(16, 15, hx + 1, 6, SHD)
+        R(hx - 1, 2, hx + 1, 5, SK)
+        P(hx + 1, 2, SKD)
+    R(8, 14, 11, 14, SK); P(9, 15, SK); P(10, 15, SKD)    # decote
+    E(4, 1, 15, 13, SKD)
+    E(4, 1, 14, 12, SK, only="opaque")
+    E(4, 1, 15, 8, HD, only="opaque")
+    E(4, 1, 14, 7, H, only="opaque")
+    R(4, 5, 5, 10 if long_hair else 8, H, only="opaque")
+    R(14, 5, 15, 10 if long_hair else 7, HD, only="opaque")
+    R(7, 7, 13, 11, SK, only="opaque")
+    R(14, 8, 14, 11, SKD, only="opaque")
+    P(8, 6, H); P(12, 6, H)
+    L(6, 3, 9, 2, HL)
+    if pose == 0:
+        R(8, 8, 8, 9, OUT); R(11, 8, 11, 9, OUT)           # olhando a tela
+        P(10, 11, SKD)
+    else:
+        R(9, 7, 9, 8, OUT); R(12, 7, 12, 8, OUT)           # olhando para cima (procurando o técnico)
+        R(10, 10, 11, 11, "#a22633")                       # boca aberta: "Socorro!"
     s.outline(OUT, where="outside")
 
 
-s = Sprite(20, 24, palette="endesga32")
-for i, (sk, hr, sh, lh) in enumerate(LOOKS):
-    if i:
-        s.add_frame(copy=False)
-    draw(s, SKINS[sk], HAIRS[hr], SHIRTS[sh], lh)
-s.preview(os.path.join(HERE, "preview.png"), scale=8, cols=8)
+s = Sprite(W, H, palette="endesga32")
+first = True
+for pose in range(3):
+    for i, (sk, hr, sh, lh) in enumerate(LOOKS):
+        if not first:
+            s.add_frame(copy=False)
+        first = False
+        draw(s, SKINS[sk], HAIRS[hr], SHIRTS[sh], lh, pose)
+s.preview(os.path.join(HERE, "preview.png"), scale=6, cols=8)
 s.stats()
 s.save_spritesheet(os.path.join(HERE, "..", "..", "assets", "sprites", "employees.png"),
                    layout="horizontal", json_path=None)

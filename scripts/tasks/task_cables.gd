@@ -15,9 +15,8 @@ func _init() -> void:
 
 
 func build() -> void:
-	var all := Helpdesk.DEVICES.duplicate()
-	Helpdesk.shuffle(all, rng)
-	devices = all.slice(0, COUNT)
+	for i in Helpdesk.pick_fresh("cables", Helpdesk.DEVICES.size(), COUNT, rng):
+		devices.append(Helpdesk.DEVICES[i])
 	_counter = make_label("", &"MutedLabel")
 	add_child(_counter)
 	_device_label = make_label("", &"HeadingLabel", 22, WARN)

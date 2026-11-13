@@ -43,6 +43,15 @@ func _init() -> void:
 			if o.intersects(d.grow(8)):
 				blocked_doors.append(d)
 	check(blocked_doors.is_empty(), "nenhuma porta bloqueada %s" % [blocked_doors])
+	# faixa livre de 1 ladrilho na frente de cada porta, dos dois lados (ninguém tromba num móvel ao passar)
+	var cramped := []
+	for d in map.doors:
+		var horizontal := map._in_floor(d.get_center() + Vector2(-64, 0)) and map._in_floor(d.get_center() + Vector2(64, 0))
+		var approach := d.grow_individual(64, 0, 64, 0) if horizontal else d.grow_individual(0, 64, 0, 64)
+		for o in map.obstacles:
+			if o.intersects(approach):
+				cramped.append([d.position, o])
+	check(cramped.is_empty(), "frente das portas livre para passar %s" % [cramped])
 	# parede alta só na borda norte ou como bloco único da coluna oeste
 	# (o erro antigo: uma faixa de 2560 un. na borda da frente começando em x=0 virava parede alta)
 	var bad_walls := map.walls.filter(func(w): return w.kind == "back" and not (w.rect.position.y < 64 or w.rect.position.x < 64))
@@ -165,16 +174,30 @@ func _init() -> void:
 	DirAccess.remove_absolute(Audio.PREF_PATH)
 	var au := Audio.new()
 	root.add_child(au)
-	check(not au.music_on and au.sfx_on, "música começa desligada e efeitos ligados")
+	check(au.music_on and au.sfx_on, "som ambiente e efeitos começam ligados (sem música)")
+	check(not ResourceLoader.exists("res://assets/sfx/music.wav") and ResourceLoader.exists("res://assets/sfx/ambient.wav"), "a música foi trocada pelo som ambiente de escritório")
 	au.set_music(true)
 	au.set_sfx(false)
 	var au2 := Audio.new()
 	root.add_child(au2)
-	check(au2.music_on and not au2.sfx_on, "escolhas de música e efeitos ficam salvas e são independentes")
-	au2.set_music(false)
+	check(au2.music_on and not au2.sfx_on, "escolhas de ambiente e efeitos ficam salvas e são independentes")
+	au2.set_music(true)
 	au2.set_sfx(true)
 	au.queue_free()
 	au2.queue_free()
+
+	# ---- pausa: voltar ao menu (com confirmação) e continuar depois
+	main.start_session({"name": "Pausa Teste", "class_code": "", "skin": 0, "hair": 0, "shirt": 0}, "treino", false)
+	main.tickets.score = 333
+	main._save_session(false)
+	main._show_pause()
+	check(main.state == main.State.PAUSED and main._overlay.visible, "P abre a pausa")
+	main._on_overlay_secondary()
+	check(main.state == main.State.PAUSED and main._confirm_menu, "voltar ao menu pede confirmação")
+	main._on_overlay_secondary()
+	check(main.state == main.State.TITLE and main._menu != null, "confirmando, volta ao menu inicial")
+	var sv := SaveGame.load_session()
+	check(sv.has("profile") and sv.profile.name == "Pausa Teste" and int(sv.state.score) == 333, "sessão continua salva para Continuar")
 
 	# ---- sessão salva: continuar restaura a pontuação e conta o reinício
 	var prof := {"name": "Teste Save", "class_code": "T1", "skin": 1, "hair": 2, "shirt": 3}
@@ -264,4 +287,55 @@ func _solve(task: TaskBase, kind: String) -> bool:
 							break
 					first = false
 				_key(task, Helpdesk.PORTS.find(d.ports[0]))
+		"files":
+			var first := true
+			while not task.is_solved:
+				var good: int = task.options.find(task.scenario.answer)
+				if first:
+					_key(task, (good + 1) % 4)
+					first = false
+				_key(task, good)
+				await process_frame
+		"install":
+			var trap := -1
+			for i in task.buttons.size():
+				if task.buttons[i].step == -1:
+					trap = i
+					break
+			_key(task, trap)
+			for step in task.program.steps.size():
+				for i in task.buttons.size():
+					if task.buttons[i].step == step:
+						_key(task, i)
+						break
+		"cleanup":
+			var bad := -1
+			for i in task.items.size():
+				if not task.items[i].safe:
+					bad = i
+					break
+			_key(task, bad)
+			task.handle_key(KEY_ENTER)          # erro: marcou algo que não pode apagar
+			_key(task, bad)
+			for i in task.items.size():
+				if task.items[i].safe:
+					_key(task, i)
+			task.handle_key(KEY_ENTER)
+		"extensions":
+			var first := true
+			while not task.is_solved:
+				var good: int = Helpdesk.EXT_PROGRAMS.find(task.files[task.index].program)
+				if first:
+					_key(task, (good + 1) % Helpdesk.EXT_PROGRAMS.size())
+					first = false
+				_key(task, good)
+		"shortcuts":
+			var first := true
+			while not task.is_solved:
+				var good: int = task.options.find(task.questions[task.index].a)
+				if first:
+					_key(task, (good + 1) % 4)
+					first = false
+				_key(task, good)
+				await process_frame
 	return task.is_solved
