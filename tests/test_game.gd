@@ -220,6 +220,48 @@ func _init() -> void:
 	var mt := load("res://assets/audio/menu_theme.ogg") as AudioStream
 	check(mt != null and absf(mt.get_length() - 30.0) < 0.2, "tema do menu tem 30 s (loop de 16 compassos)")
 
+	# ---- celular/mouse: tocar no chão anda até lá; tocar num funcionário com chamado abre o atendimento
+	main.start_session({"name": "Toque", "class_code": "", "skin": 0, "hair": 0, "shirt": 0}, "treino", false)
+	await process_frame
+	var tp: Player = main.get_node("%Player")
+	var no_route := []
+	for d in map.desks:
+		if map.find_path(OfficeMap.START, d.pos).is_empty():
+			no_route.append(d.employee)
+	check(no_route.is_empty(), "toque: há rota da sala de TI até todas as mesas %s" % str(no_route))
+	main.tickets.spawn_timer = 9999.0
+	main.tickets.spawn()
+	var tt: Dictionary = main.tickets.tickets[0]
+	var tdesk: Dictionary = map.desks[tt.desk]
+	main._tap(main._to_screen(OfficeMap.iso(tdesk.center) + Vector2(0, -24)))
+	check(not tp.path.is_empty(), "toque no funcionário (%s) traça a rota" % tdesk.employee)
+	for i in 3000:
+		tp._process(1.0 / 60.0)
+		if main.state == main.State.TASK or tp.path.is_empty():
+			break
+	check(main.state == main.State.TASK, "técnico chega à mesa e o atendimento abre sozinho")
+	main._cancel_task()
+	var dest := Vector2(760, 1010)
+	main._tap(main._to_screen(OfficeMap.iso(dest)))
+	for i in 3000:
+		tp._process(1.0 / 60.0)
+		if tp.path.is_empty():
+			break
+	check(tp.position.distance_to(dest) < 24, "toque no chão: técnico anda até o ponto (ficou a %.0f)" % tp.position.distance_to(dest))
+	tp.position = OfficeMap.START
+	main._tap(main._to_screen(OfficeMap.iso(Vector2(300, 1000))))
+	var moved := tp.position
+	for i in 20:
+		tp._process(1.0 / 60.0)
+	check(tp.position != moved, "toque longe (outra sala) também anda")
+	check(not tp.path.is_empty(), "rota ainda em andamento")
+	Input.parse_input_event(_keyev(KEY_LEFT, true))
+	Input.flush_buffered_events()
+	tp._process(1.0 / 60.0)
+	check(tp.path.is_empty(), "teclado cancela a rota do toque")
+	Input.parse_input_event(_keyev(KEY_LEFT, false))
+	Input.flush_buffered_events()
+
 	# ---- pausa: voltar ao menu (com confirmação) e continuar depois
 	main.start_session({"name": "Pausa Teste", "class_code": "", "skin": 0, "hair": 0, "shirt": 0}, "treino", false)
 	main.tickets.score = 333
@@ -248,6 +290,14 @@ func _init() -> void:
 
 	print("\n%s" % ("TODOS OS TESTES PASSARAM" if failures == 0 else "%d FALHA(S)" % failures))
 	quit(1 if failures > 0 else 0)
+
+
+func _keyev(k: Key, down: bool) -> InputEventKey:
+	var e := InputEventKey.new()
+	e.keycode = k
+	e.physical_keycode = k
+	e.pressed = down
+	return e
 
 
 func _key(task: TaskBase, n: int) -> void:

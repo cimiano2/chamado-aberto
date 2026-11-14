@@ -45,6 +45,11 @@ var player_tex: Texture2D             # sprite do técnico já com a skin escolh
 var player_back := false
 var player_flip := false
 var player_frame := 0
+## Marca no chão onde o jogador tocou/clicou (some sozinha).
+var tap_marker := Vector2.INF
+var tap_marker_t := 0.0
+var _astar: AStarGrid2D
+const NAV := 32.0           # célula da grade de navegação (meio ladrilho)
 
 var _time := 0.0
 var _static: Node2D          # pisos + paredes do fundo (desenhado uma vez)
@@ -130,6 +135,7 @@ func room_rect(name: String) -> Rect2:
 # ================================================================ montagem do andar
 
 func build() -> void:
+	_astar = null
 	floors.clear(); doors.clear(); obstacles.clear(); desks.clear(); props.clear(); walls.clear()
 	for r in rooms:
 		r.rect = tile_rect(r.tiles)
@@ -336,6 +342,7 @@ func iso_bounds() -> Rect2:
 
 func _process(delta: float) -> void:
 	_time += delta
+	tap_marker_t = maxf(0.0, tap_marker_t - delta)
 	queue_redraw()
 
 
@@ -402,6 +409,99 @@ var draw_usec := 0          # tempo do último _draw (medição de desempenho)
 var draw_items := 0
 
 
+# ------------------------------------------------------------ toque / rota
+
+## Rota andável (pontos no mundo) de `from` até `to`, contornando paredes e móveis.
+## Vazia se não houver caminho.
+func find_path(from: Vector2, to: Vector2) -> PackedVector2Array:
+	if _astar == null:
+		_build_nav()
+	var a := _nearest_free(_nav_cell(from))
+	var b := _nearest_free(_nav_cell(to))
+	if a.x < 0 or b.x < 0:
+		return PackedVector2Array()
+	var pts := _astar.get_point_path(a, b)
+	if pts.is_empty():
+		return pts
+	pts.remove_at(0)        # a célula onde o técnico já está
+	if _feet_ok(to):
+		pts.append(to)      # termina no ponto exato tocado
+	return pts
+
+
+func _build_nav() -> void:
+	_astar = AStarGrid2D.new()
+	_astar.region = Rect2i(0, 0, int(COLS * TILE / NAV), int(ROWS * TILE / NAV))
+	_astar.cell_size = Vector2(NAV, NAV)
+	_astar.offset = Vector2(NAV, NAV) / 2.0
+	_astar.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_ONLY_IF_NO_OBSTACLES
+	_astar.update()
+	for x in _astar.region.size.x:
+		for y in _astar.region.size.y:
+			if not _feet_ok(Vector2(x, y) * NAV + Vector2(NAV, NAV) / 2.0):
+				_astar.set_point_solid(Vector2i(x, y))
+
+
+func _feet_ok(p: Vector2) -> bool:
+	return is_walkable(Rect2(p + Player.FEET.position, Player.FEET.size))
+
+
+func _nav_cell(p: Vector2) -> Vector2i:
+	var c := Vector2i((p / NAV).floor())
+	return c.clamp(Vector2i.ZERO, _astar.region.size - Vector2i.ONE)
+
+
+## Célula livre mais próxima (o toque pode cair num móvel ou parede).
+func _nearest_free(c: Vector2i) -> Vector2i:
+	if not _astar.is_point_solid(c):
+		return c
+	for r in range(1, 6):
+		var best := Vector2i(-1, -1)
+		var best_d := INF
+		for dx in range(-r, r + 1):
+			for dy in range(-r, r + 1):
+				var n := c + Vector2i(dx, dy)
+				if _astar.is_in_boundsv(n) and not _astar.is_point_solid(n):
+					var d := Vector2(dx, dy).length()
+					if d < best_d:
+						best_d = d
+						best = n
+		if best.x >= 0:
+			return best
+	return Vector2i(-1, -1)
+
+
+## Mesa cujo desenho (móvel + funcionário) está sob o ponto `c` do canvas isométrico; -1 se nenhuma.
+func desk_at_canvas(c: Vector2) -> int:
+	var best := -1
+	var best_d := INF
+	for i in desks.size():
+		var base := Vector2(iso(desks[i].center))
+		var box := Rect2(base + Vector2(-34, -58), Vector2(68, 74))
+		if box.has_point(c):
+			var d := c.distance_to(base + Vector2(0, -20))
+			if d < best_d:
+				best_d = d
+				best = i
+	return best
+
+
+func show_tap(p: Vector2) -> void:
+	tap_marker = p
+	tap_marker_t = 0.6
+
+
+func _draw_tap_marker() -> void:
+	if tap_marker_t <= 0.0:
+		return
+	var k := tap_marker_t / 0.6
+	var c := Vector2(iso(tap_marker))
+	var r := 6.0 + (1.0 - k) * 6.0
+	draw_set_transform(c, 0.0, Vector2(1.0, 0.5))
+	draw_arc(Vector2.ZERO, r, 0.0, TAU, 20, Color(1.0, 0.85, 0.25, k), 1.0)
+	draw_set_transform(Vector2.ZERO)
+
+
 func _draw() -> void:
 	var t0 := Time.get_ticks_usec()
 	_draw_dynamic()
@@ -409,6 +509,7 @@ func _draw() -> void:
 
 
 func _draw_dynamic() -> void:
+	_draw_tap_marker()
 	var items: Array = []   # [chave_de_profundidade, Callable]
 	for w in walls:
 		if w.kind == "low" or w.kind == "glass":

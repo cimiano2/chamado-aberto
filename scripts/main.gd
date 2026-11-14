@@ -39,6 +39,9 @@ var _pause_sound_row: HBoxContainer
 var _btn_ambient: Button
 var _btn_sfx: Button
 var _pause_button: Button
+var _serve_button: Button        # "Atender chamado" (toque/clique)
+var _rotate_layer: CanvasLayer   # aviso "gire o celular"
+var _auto_desk := -1             # mesa a atender quando o técnico chegar (toque numa mesa)
 var _confirm_menu := false
 var _chat_cooldown := {}         # mesa -> segundos até poder falar de novo
 var _step_t := 0.0
@@ -116,6 +119,22 @@ func _ready() -> void:
 	_pause_button.offset_left = 16
 	_pause_button.offset_top = -60
 	_pause_button.offset_bottom = -22
+	_serve_button = Button.new()
+	_serve_button.text = "Atender chamado  (E)"
+	_serve_button.focus_mode = Control.FOCUS_NONE
+	_serve_button.theme_type_variation = &"PrimaryButton"
+	_serve_button.add_theme_font_size_override("font_size", 22)
+	_room_labels.get_parent().add_child(_serve_button)
+	_serve_button.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM, Control.PRESET_MODE_KEEP_SIZE)
+	_serve_button.offset_left = -150
+	_serve_button.offset_right = 150
+	_serve_button.offset_top = -128
+	_serve_button.offset_bottom = -72
+	_serve_button.visible = false
+	_serve_button.pressed.connect(_interact)
+	_build_task_exit()
+	_build_rotate_hint()
+	_player.arrived.connect(_on_player_arrived)
 	_pause_button.pressed.connect(func():
 		if state == State.PLAYING:
 			_show_pause()
@@ -177,6 +196,8 @@ func _show_menu() -> void:
 
 ## Começa (ou continua) uma sessão. Com código de turma, todos recebem os mesmos chamados.
 func start_session(p: Dictionary, m: String, resume: bool) -> void:
+	_player.stop_walk()
+	_auto_desk = -1
 	profile = p
 	mode = m
 	var saved := SaveGame.load_session() if resume else {}
@@ -259,6 +280,7 @@ func _update_camera() -> void:
 		node.modulate.a = 0.25 if Rect2(node.position, node.size).intersects(me) else 1.0
 	_name_tag.visible = state != State.TITLE
 	_pause_button.visible = state == State.PLAYING
+	_serve_button.visible = state == State.PLAYING and _near_desk >= 0 and not tickets.ticket_at_desk(_near_desk).is_empty()
 	_name_tag.position = (_to_screen(OfficeMap.iso_f(_player.position)) + Vector2(-_name_tag.size.x / 2.0, 6)).round()
 
 
@@ -270,6 +292,9 @@ func _to_screen(p: Vector2) -> Vector2:
 ## A interface ocupa a tela toda (base 1280x720, escala livre) com fonte comum suavizada,
 ## legível em qualquer escala. O mundo em pixel art usa escala sempre inteira (_fit_world).
 func _fit_window() -> void:
+	if _rotate_layer:
+		var ws := get_window().size
+		_rotate_layer.visible = ws.y > ws.x
 	_fit_world.call_deferred()
 
 
@@ -280,7 +305,13 @@ func _fit_world() -> void:
 	var ui := get_viewport().get_final_transform()
 	var k := ui.get_scale()                       # pixels da tela por unidade da interface
 	var phys := Vector2(get_window().size)        # pixels reais da janela
-	view_scale = clampi(roundi(phys.y / 360.0), 2, 8)
+	# ~360 linhas de arte visíveis; em celular (tela de toque baixa) aproxima mais, para os
+	# personagens não ficarem minúsculos e serem fáceis de tocar
+	var rows := 360.0
+	var dpr := maxf(1.0, DisplayServer.screen_get_scale())
+	if DisplayServer.is_touchscreen_available() and phys.y / dpr < 520.0:
+		rows = 250.0
+	view_scale = clampi(roundi(phys.y / rows), 2, 8)
 	_world_view.stretch_shrink = view_scale
 	var px := Vector2i.ZERO
 	for axis in 2:
@@ -431,6 +462,11 @@ func _set_fill(bar: ProgressBar, color: Color) -> void:
 # ================================================================ entrada
 
 func _unhandled_input(event: InputEvent) -> void:
+	var mb := event as InputEventMouseButton
+	if mb and mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT and state == State.PLAYING:
+		_tap(mb.position)
+		get_viewport().set_input_as_handled()
+		return
 	var key := event as InputEventKey
 	if key == null or not key.pressed or key.echo:
 		return
@@ -476,6 +512,80 @@ func _unhandled_input(event: InputEvent) -> void:
 	get_viewport().set_input_as_handled()
 
 
+## Toque/clique no mundo: anda até o ponto (contornando paredes); tocando num funcionário
+## com chamado, anda até a mesa dele e abre o atendimento ao chegar.
+func _tap(ui_pos: Vector2) -> void:
+	var local := _world_view.get_global_transform().affine_inverse() * ui_pos
+	var c := (local - _world_view.size / 2.0) / view_scale + _cam_f      # ponto no canvas isométrico
+	var desk := _map.desk_at_canvas(c)
+	var target := Vector2(2.0 * c.x + 4.0 * c.y, -2.0 * c.x + 4.0 * c.y)   # chão (inverso da projeção)
+	_auto_desk = -1
+	if desk >= 0:
+		target = _map.desks[desk].pos
+		if not tickets.ticket_at_desk(desk).is_empty():
+			_auto_desk = desk
+			if _map.desk_index_near(_player.position) == desk:
+				_player.stop_walk()
+				_on_player_arrived()
+				return
+	var path := _map.find_path(_player.position, target)
+	if path.is_empty():
+		_auto_desk = -1
+		return
+	_map.show_tap(path[path.size() - 1])
+	_player.walk_to(path)
+
+
+func _on_player_arrived() -> void:
+	var d := _auto_desk
+	_auto_desk = -1
+	if d < 0 or state != State.PLAYING or _map.desk_index_near(_player.position) != d:
+		return
+	var t := tickets.ticket_at_desk(d)
+	if not t.is_empty():
+		_player.facing = Vector2.UP
+		_open_task(t)
+
+
+## Botão "Sair" no canto do atendimento (para quem não tem a tecla Esc: celular/tablet).
+func _build_task_exit() -> void:
+	var vbox := _ticket_header.get_parent()
+	var row := HBoxContainer.new()
+	vbox.add_child(row)
+	vbox.move_child(row, _ticket_header.get_index())
+	_ticket_header.reparent(row)
+	_ticket_header.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var b := Button.new()
+	b.text = "Sair  (Esc)"
+	b.focus_mode = Control.FOCUS_NONE
+	b.add_theme_font_size_override("font_size", 15)
+	b.pressed.connect(func():
+		if state == State.TASK:
+			_cancel_task())
+	row.add_child(b)
+
+
+## Celular em pé: pede para girar (o jogo é horizontal).
+func _build_rotate_hint() -> void:
+	_rotate_layer = CanvasLayer.new()
+	_rotate_layer.layer = 20
+	add_child(_rotate_layer)
+	var bg := ColorRect.new()
+	bg.color = Color("181425")
+	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_rotate_layer.add_child(bg)
+	var l := Label.new()
+	l.text = "Gire o celular\npara a horizontal"
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	l.add_theme_font_size_override("font_size", 64)
+	l.add_theme_color_override("font_color", Color("2ce8f5"))
+	l.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	bg.add_child(l)
+	_rotate_layer.visible = false
+	_fit_window()
+
+
 func _interact() -> void:
 	if _near_desk < 0:
 		return
@@ -487,6 +597,7 @@ func _interact() -> void:
 # ================================================================ minijogos
 
 func _open_task(t: Dictionary) -> void:
+	_player.stop_walk()
 	var script: GDScript = load(TicketSystem.TYPES[t.kind].task)
 	_task = script.new()
 	_task.set_meta("employee", t.employee)
@@ -653,6 +764,7 @@ func download_report() -> String:
 # ================================================================ overlays
 
 func _show_pause() -> void:
+	_player.stop_walk()
 	state = State.PAUSED
 	_overlay_text.text = """[color=#2ce8f5][font_size=28]PAUSA PARA O CAFÉ[/font_size][/color]
 [color=#c0cbdc]%s · Dia %d · %s · %d pontos[/color]

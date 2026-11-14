@@ -285,7 +285,7 @@ autowrap_mode = 3
 [node name="Footer" type="Label" parent="TaskLayer/Dim/Center/Modal/VBox"]
 layout_mode = 2
 theme_type_variation = &"CaptionLabel"
-text = "Teclas 1–9 e Enter (ou mouse) · Esc: sair sem resolver (o prazo volta a correr)"
+text = "Teclas 1–9 e Enter, ou toque/clique · Esc ou Sair: sair sem resolver (o prazo volta a correr)"
 
 [node name="Overlay" type="CanvasLayer" parent="."]
 unique_name_in_owner = true

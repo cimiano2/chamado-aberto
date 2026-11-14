@@ -243,6 +243,7 @@ func _footer() -> Control:
 	h.add_theme_constant_override("separation", 10)
 	h.add_child(_button("Placar", _show_board, C_YELLOW))
 	h.add_child(_button("Como jogar", _show_help, C_CYAN))
+	h.add_child(_button("Tela cheia", toggle_fullscreen, Color("8b9bb4")))
 	var sp := Control.new()
 	sp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	h.add_child(sp)
@@ -253,6 +254,12 @@ func _footer() -> Control:
 	h.add_child(_music_btn)
 	h.add_child(_sfx_btn)
 	return h
+
+
+## Tela cheia (útil no celular: some a barra do navegador).
+static func toggle_fullscreen() -> void:
+	var full := DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
+	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED if full else DisplayServer.WINDOW_MODE_FULLSCREEN)
 
 
 # ================================================================ peças
@@ -405,6 +412,7 @@ func _show_help() -> void:
 	_open_popup("COMO JOGAR", """[color=#feae34]Andar:[/color] WASD ou setas  ·  [color=#feae34]Atender:[/color] E (na frente da mesa com [b]![/b])
 [color=#feae34]Responder:[/color] teclas 1–9 e Enter (ou o mouse)  ·  [color=#feae34]Sair do atendimento:[/color] Esc
 [color=#feae34]Pausa:[/color] P ou Esc  ·  [color=#feae34]Som ambiente:[/color] M  ·  [color=#feae34]Efeitos:[/color] N
+[color=#feae34]Celular, tablet ou mouse:[/color] toque/clique no chão para andar até lá; toque em quem está com [b]![/b] e o técnico vai até a mesa e atende. Botões [b]Atender[/b] e [b]Sair[/b] na tela.
 
 A seta amarela aponta o chamado mais urgente. Cada chamado tem um prazo:
 se ele estourar, a satisfação dos usuários cai e você perde pontos.

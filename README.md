@@ -23,6 +23,9 @@ Jogo 2D educativo em **pixel art isométrica**, feito em **Godot 4.3**. Você é
 | `1`–`9` / `Enter` | escolher e confirmar dentro do atendimento |
 | `Esc` | sair do atendimento sem resolver |
 | `P` | pausa · `M` liga/desliga o som ambiente · `N` liga/desliga os efeitos |
+| toque / clique | andar até o ponto (a rota contorna paredes e passa pelas portas); tocar em quem está com **!** leva o técnico até a mesa e abre o atendimento |
+
+**No celular ou tablet:** abra o link com o aparelho **deitado** (na horizontal) e use o botão **Tela cheia** do menu. Tudo funciona por toque: digitar nome e turma (abre o teclado do celular), andar, atender (botão **Atender**), responder e sair (**Sair**). Em celular a câmera fica mais próxima, para os personagens não ficarem pequenos.
 
 - O **menu** tem uma **música original em 8 bits** (botão "Música do menu" para desligar); durante o jogo toca um **som ambiente de escritório** (gravação). Música, ambiente e efeitos têm chaves separadas e a escolha fica salva.
 - Na tela inicial o aluno digita o **nome**, o **código da turma** e escolhe o **estilo (masculino ou feminino)**, **pele, cabelo e camisa** do personagem.
