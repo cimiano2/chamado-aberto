@@ -262,6 +262,50 @@ func _init() -> void:
 	Input.parse_input_event(_keyev(KEY_LEFT, false))
 	Input.flush_buffered_events()
 
+	# ---- versão 3D: mesmo jogo, mundo desenhado em 3D
+	main.start_session({"name": "Tres D", "class_code": "", "skin": 1, "hair": 2, "shirt": 3, "body": 1, "view": "3d"}, "treino", false)
+	await process_frame
+	await process_frame
+	check(main.is_3d and main._w3 != null and main._w3_view.visible and not main._world_view.visible, "3D: visual 3D ligado, 2D escondido")
+	var meshes: int = main._w3.find_children("*", "MeshInstance3D", true, false).size()
+	check(meshes > 50, "3D: cenário, pessoas e marcadores montados (%d malhas)" % meshes)
+	check(main._w3._workers.size() >= 12, "3D: funcionários sentados nas mesas (%d)" % main._w3._workers.size())
+	var p3: Player = main.get_node("%Player")
+	var start3: Vector2 = p3.position
+	Input.parse_input_event(_keyev(KEY_DOWN, true))
+	Input.flush_buffered_events()
+	for i in 20:
+		p3._process(1.0 / 60.0)
+	Input.parse_input_event(_keyev(KEY_DOWN, false))
+	Input.flush_buffered_events()
+	p3._process(1.0 / 60.0)
+	check(p3.position != start3, "3D: teclado anda (mesma lógica do 2D)")
+	main.tickets.spawn_timer = 9999.0
+	main.tickets.spawn()
+	var t3: Dictionary = main.tickets.tickets[main.tickets.tickets.size() - 1]
+	var d3: Dictionary = map.desks[t3.desk]
+	main._sync_world()
+	var sp3: Vector2 = main._speaker(t3.desk)
+	check(is_finite(sp3.x) and is_finite(sp3.y), "3D: balão de fala ancorado na tela")
+	var head3: Vector2 = main._w3_ui(main._w3.point_screen(d3.center + Vector2(24, -44), 1.2))
+	main._tap(head3)
+	check(not p3.path.is_empty() or main.state == main.State.TASK, "3D: toque no funcionário (%s) traça a rota" % d3.employee)
+	for i in 4000:
+		p3._process(1.0 / 60.0)
+		if main.state == main.State.TASK or p3.path.is_empty():
+			break
+	check(main.state == main.State.TASK, "3D: técnico chega à mesa e o atendimento abre")
+	main._cancel_task()
+	var floor_pt := Vector2(760, 1010)    # área livre da sala de vendas
+	main._tap(main._world_to_ui(floor_pt, 0.0))
+	for i in 3000:
+		p3._process(1.0 / 60.0)
+		if p3.path.is_empty():
+			break
+	check(p3.position.distance_to(floor_pt) < 40, "3D: toque no chão anda até o ponto (ficou a %.0f)" % p3.position.distance_to(floor_pt))
+	main.back_to_menu()
+	check(not main.is_3d and main._world_view.visible and not main._w3_view.visible, "3D: voltar ao menu mostra o escritório 2D")
+
 	# ---- pausa: voltar ao menu (com confirmação) e continuar depois
 	main.start_session({"name": "Pausa Teste", "class_code": "", "skin": 0, "hair": 0, "shirt": 0}, "treino", false)
 	main.tickets.score = 333

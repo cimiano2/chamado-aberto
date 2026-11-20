@@ -45,6 +45,10 @@ var _auto_desk := -1             # mesa a atender quando o técnico chegar (toqu
 var _confirm_menu := false
 var _chat_cooldown := {}         # mesa -> segundos até poder falar de novo
 var _step_t := 0.0
+## Versão 3D: o mesmo jogo (mapa, colisão, chamados) com o mundo desenhado em 3D.
+var is_3d := false
+var _w3: Office3D
+var _w3_view: SubViewportContainer
 
 @onready var _map: OfficeMap = %OfficeMap
 @onready var _player: Player = %Player
@@ -145,7 +149,7 @@ func _ready() -> void:
 	_balloons = Balloons.new()
 	_balloons.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_balloons.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_balloons.to_screen = _to_screen
+	_balloons.to_screen = func(p: Vector2) -> Vector2: return p    # âncoras já vêm na tela
 	_room_labels.get_parent().add_child(_balloons)
 	_room_labels.get_parent().move_child(_balloons, _room_labels.get_index() + 1)
 	_name_tag = Label.new()
@@ -177,6 +181,7 @@ func _new_tickets(seed_value: int) -> void:
 
 func _show_menu() -> void:
 	state = State.TITLE
+	_set_view(false)          # o fundo do menu é sempre o escritório em pixel art
 	_overlay.visible = false
 	_room_labels.get_parent().visible = false     # HUD escondido enquanto o menu está aberto
 	if _audio:
@@ -200,6 +205,7 @@ func start_session(p: Dictionary, m: String, resume: bool) -> void:
 	_auto_desk = -1
 	profile = p
 	mode = m
+	_set_view(str(p.get("view", "2d")) == "3d")
 	var saved := SaveGame.load_session() if resume else {}
 	_new_tickets(_seed())
 	if resume and saved.has("state"):
@@ -210,6 +216,9 @@ func start_session(p: Dictionary, m: String, resume: bool) -> void:
 		restarts = 0
 	_begin_day(tickets.day)
 	_map.player_tex = Skins.texture(profile.skin, profile.hair, profile.shirt, int(profile.get("body", 0)))
+	if is_3d:
+		_w3.set_profile(profile)
+		_w3.snap_camera()
 	_name_tag.text = profile.name
 	_name_tag.add_theme_color_override("font_color", Skins.SHIRT[profile.shirt].c[0])
 	if _menu_layer:
@@ -236,6 +245,8 @@ func _begin_day(n: int) -> void:
 		tickets.rng.seed = absi(("%s|%s|dia%d" % [profile.class_code, mode, n]).hash())
 	_player.position = OfficeMap.START
 	_player.facing = Vector2.DOWN
+	if is_3d and _w3:
+		_w3.snap_camera()
 	_balloons.clear()
 	_save_session(false)
 
@@ -272,21 +283,80 @@ func _update_camera() -> void:
 	r = r.round()
 	_cam_f = r
 	_camera.position = r
-	var me := Rect2(_to_screen(OfficeMap.iso_f(_player.position)) - Vector2(24, 76), Vector2(48, 82))
+	var feet := _world_to_ui(_player.position, 0.0)
+	var me := Rect2(feet - Vector2(24, 76), Vector2(48, 82))
 	for p in _plaques:
 		var node: Control = p.node
-		node.position = (_to_screen(OfficeMap.iso_f(p.world, 30)) - node.size / 2.0).round()
+		node.position = (_world_to_ui(p.world, 30.0) - node.size / 2.0).round()
 		# placa fica quase transparente quando o personagem passa por trás dela
 		node.modulate.a = 0.25 if Rect2(node.position, node.size).intersects(me) else 1.0
 	_name_tag.visible = state != State.TITLE
 	_pause_button.visible = state == State.PLAYING
 	_serve_button.visible = state == State.PLAYING and _near_desk >= 0 and not tickets.ticket_at_desk(_near_desk).is_empty()
-	_name_tag.position = (_to_screen(OfficeMap.iso_f(_player.position)) + Vector2(-_name_tag.size.x / 2.0, 6)).round()
+	_name_tag.position = (feet + Vector2(-_name_tag.size.x / 2.0, 6)).round()
 
 
 ## Ponto do canvas isométrico (640x360) → posição na tela cheia.
 func _to_screen(p: Vector2) -> Vector2:
 	return _world_view.get_global_transform() * ((p - _cam_f) * view_scale + _world_view.size / 2.0)
+
+
+## Ponto do mundo (altura em "pixels" do desenho 2D) → posição na tela cheia, em 2D ou 3D.
+func _world_to_ui(world: Vector2, z: float) -> Vector2:
+	if is_3d:
+		return _w3_ui(_w3.point_screen(world, z * Office3D.PX))
+	return _to_screen(OfficeMap.iso_f(world, z))
+
+
+## Ponto da SubViewport 3D → tela cheia (e o inverso, para toques).
+func _w3_ui(p: Vector2) -> Vector2:
+	return _w3_view.get_global_transform() * (p * _w3_view.stretch_shrink)
+
+
+func _ui_w3(ui_pos: Vector2) -> Vector2:
+	return (_w3_view.get_global_transform().affine_inverse() * ui_pos) / _w3_view.stretch_shrink
+
+
+## Balão de fala de quem está na mesa i (já em coordenadas da tela).
+func _speaker(i: int) -> Vector2:
+	if is_3d:
+		return _w3_ui(_w3.speaker_screen(i))
+	return _to_screen(_map.speaker_point(i))
+
+
+## Liga o visual 2D (pixel art) ou 3D. Só o desenho muda: mapa, colisão e chamados são os mesmos.
+func _set_view(three: bool) -> void:
+	if three and _w3 == null:
+		_build_3d()
+	is_3d = three
+	_world_view.visible = not three
+	(_world_view.get_child(0) as SubViewport).render_target_update_mode = \
+		SubViewport.UPDATE_DISABLED if three else SubViewport.UPDATE_ALWAYS
+	if _w3:
+		_w3_view.visible = three
+		_w3.process_mode = Node.PROCESS_MODE_INHERIT if three else Node.PROCESS_MODE_DISABLED
+		(_w3_view.get_child(0) as SubViewport).render_target_update_mode = \
+			SubViewport.UPDATE_ALWAYS if three else SubViewport.UPDATE_DISABLED
+	if _balloons:
+		_balloons.clear()
+	_fit_world()
+
+
+func _build_3d() -> void:
+	_w3_view = SubViewportContainer.new()
+	_w3_view.stretch = true
+	_w3_view.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_w3_view.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	var vp := SubViewport.new()
+	vp.own_world_3d = true
+	vp.handle_input_locally = false
+	vp.msaa_3d = Viewport.MSAA_DISABLED
+	_w3_view.add_child(vp)
+	add_child(_w3_view)
+	move_child(_w3_view, _world_view.get_index() + 1)
+	_w3 = Office3D.new()
+	vp.add_child(_w3)
+	_w3.setup(_map, _player)
 
 
 ## A interface ocupa a tela toda (base 1280x720, escala livre) com fonte comum suavizada,
@@ -326,10 +396,19 @@ func _fit_world() -> void:
 	_world_view.scale = Vector2(1.0 / k.x, 1.0 / k.y)
 	_world_view.size = total
 	_world_view.position = ui.affine_inverse() * corner_phys
+	if _w3_view:
+		# 3D na resolução real da tela; em celular (tela densa) pela metade, para ficar leve
+		_w3_view.stretch_shrink = 2 if dpr >= 2.0 or rows < 300.0 else 1
+		_w3_view.set_anchors_preset(Control.PRESET_TOP_LEFT)
+		_w3_view.scale = Vector2(1.0 / k.x, 1.0 / k.y)
+		_w3_view.size = phys
+		_w3_view.position = ui.affine_inverse() * Vector2.ZERO
 
 
 func _player_head() -> Vector2:
-	return OfficeMap.iso_f(_player.position, 36)
+	if is_3d:
+		return _w3_ui(_w3.head_screen())
+	return _to_screen(OfficeMap.iso_f(_player.position, 36))
 
 
 func _build_plaques() -> void:
@@ -368,15 +447,17 @@ func _sync_world() -> void:
 	_minimap.tickets = tickets.tickets
 	var urgent := tickets.most_urgent()
 	_guide.target = _map.desks[urgent.desk].pos if not urgent.is_empty() and state == State.PLAYING else Vector2.INF
+	if is_3d:
+		_w3.guide_target = _guide.target
 	var near := _map.desk_index_near(_player.position)
 	if near != _near_desk and near >= 0 and state == State.PLAYING and _chat_cooldown.get(near, 0.0) <= 0.0:
 		# quem está na mesa puxa conversa (como num chat de mundo isométrico)
 		var t := tickets.ticket_at_desk(near)
 		var d: Dictionary = _map.desks[near]
 		if not t.is_empty():
-			_balloons.say(d.employee, t.title, _map.speaker_point.bind(near), Color("a22633"))
+			_balloons.say(d.employee, t.title, _speaker.bind(near), Color("a22633"))
 		elif not d.server:
-			_balloons.say(d.employee, FINE[near % FINE.size()], _map.speaker_point.bind(near))
+			_balloons.say(d.employee, FINE[near % FINE.size()], _speaker.bind(near))
 		_chat_cooldown[near] = 8.0
 	_near_desk = near
 
@@ -515,10 +596,19 @@ func _unhandled_input(event: InputEvent) -> void:
 ## Toque/clique no mundo: anda até o ponto (contornando paredes); tocando num funcionário
 ## com chamado, anda até a mesa dele e abre o atendimento ao chegar.
 func _tap(ui_pos: Vector2) -> void:
-	var local := _world_view.get_global_transform().affine_inverse() * ui_pos
-	var c := (local - _world_view.size / 2.0) / view_scale + _cam_f      # ponto no canvas isométrico
-	var desk := _map.desk_at_canvas(c)
-	var target := Vector2(2.0 * c.x + 4.0 * c.y, -2.0 * c.x + 4.0 * c.y)   # chão (inverso da projeção)
+	var desk: int
+	var target: Vector2
+	if is_3d:
+		var sp := _ui_w3(ui_pos)
+		desk = _w3.desk_at_screen(sp)
+		target = _w3.screen_to_ground(sp)
+		if target == Vector2.INF and desk < 0:
+			return
+	else:
+		var local := _world_view.get_global_transform().affine_inverse() * ui_pos
+		var c := (local - _world_view.size / 2.0) / view_scale + _cam_f      # ponto no canvas isométrico
+		desk = _map.desk_at_canvas(c)
+		target = Vector2(2.0 * c.x + 4.0 * c.y, -2.0 * c.x + 4.0 * c.y)   # chão (inverso da projeção)
 	_auto_desk = -1
 	if desk >= 0:
 		target = _map.desks[desk].pos
@@ -666,12 +756,12 @@ func _close_task() -> void:
 
 func _on_ticket_opened(t: Dictionary) -> void:
 	_audio.play("ticket", -3.0)
-	_balloons.say(t.employee, t.title, _map.speaker_point.bind(t.desk), Color("a22633"))
+	_balloons.say(t.employee, t.title, _speaker.bind(t.desk), Color("a22633"))
 	_chat_cooldown[t.desk] = 8.0
 
 
 func _on_ticket_resolved(t: Dictionary, pts: int) -> void:
-	_balloons.say(t.employee, THANKS[t.id % THANKS.size()], _map.speaker_point.bind(t.desk), Color("3e8948"))
+	_balloons.say(t.employee, THANKS[t.id % THANKS.size()], _speaker.bind(t.desk), Color("3e8948"))
 	var extra := ""
 	if tickets.combo >= 2:
 		extra = "  ·  sequência de %d sem erro!" % tickets.combo
@@ -681,7 +771,7 @@ func _on_ticket_resolved(t: Dictionary, pts: int) -> void:
 
 func _on_ticket_expired(t: Dictionary) -> void:
 	_audio.play("expired")
-	_balloons.say(t.employee, ANGRY[t.id % ANGRY.size()], _map.speaker_point.bind(t.desk), Color("a22633"))
+	_balloons.say(t.employee, ANGRY[t.id % ANGRY.size()], _speaker.bind(t.desk), Color("a22633"))
 	_show_toast("Prazo estourado! Chamado #%d de %s (−%d pontos)." % [t.id, t.employee, TicketSystem.EXPIRED_PENALTY], Color("ff5a5a"))
 
 

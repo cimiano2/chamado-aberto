@@ -4,6 +4,10 @@ Jogo 2D educativo em **pixel art isométrica**, feito em **Godot 4.3**. Você é
 
 ![Escritório](docs/jogo.png)
 
+**Versão 3D:** o mesmo jogo, com o escritório em 3D low poly. Escolha *Visual do jogo: 3D* no menu.
+
+![Escritório em 3D](docs/jogo3d.png)
+
 | Tela inicial | Relatório |
 |---|---|
 | ![menu](docs/menu.png) | ![relatório](docs/relatorio.png) |
@@ -28,6 +32,9 @@ Jogo 2D educativo em **pixel art isométrica**, feito em **Godot 4.3**. Você é
 **No celular ou tablet:** abra o link com o aparelho **deitado** (na horizontal) e use o botão **Tela cheia** do menu. Tudo funciona por toque: digitar nome e turma (abre o teclado do celular), andar, atender (botão **Atender**), responder e sair (**Sair**). Em celular a câmera fica mais próxima, para os personagens não ficarem pequenos.
 
 - O **menu** tem uma **música original em 8 bits** (botão "Música do menu" para desligar); durante o jogo toca um **som ambiente de escritório** (gravação). Música, ambiente e efeitos têm chaves separadas e a escolha fica salva.
+- **2D ou 3D:** no menu, *Visual do jogo* escolhe entre a pixel art isométrica e a versão 3D. É o
+  **mesmo jogo** (mesmos chamados, prazos, pontuação, nota e relatório; a mesma sequência para o
+  mesmo código de turma), só o desenho do escritório muda. A escolha fica salva na sessão.
 - Na tela inicial o aluno digita o **nome**, o **código da turma** e escolhe o **estilo (masculino ou feminino)**, **pele, cabelo e camisa** do personagem.
 - **Treino**: expedientes seguidos, a sessão é **salva** no início de cada dia (botão *Continuar*).
 - **Avaliação**: um expediente (5 min), no fim aparece a nota e o botão **Baixar relatório**.
@@ -88,11 +95,13 @@ godot --headless --fixed-fps 60 --path . -s tests/test_camera.gd
 
 - `test_logic.gd`: política de senha e consistência dos dados dos chamados.
 - `test_game.gd`: confere o cenário (nada fora das salas, portas livres, toda mesa alcançável), abre cada tipo de chamado e o resolve **pelo teclado**, inclusive com um erro proposital; testa fim do dia e fim de jogo.
+- `test_game.gd` também testa a versão 3D: montagem do escritório, andar, tocar num funcionário e abrir o atendimento, voltar ao 2D.
+- `screenshot3d.gd` (com janela): capturas da versão 3D.
 - `test_camera.gd`: segura as setas e mede, quadro a quadro, que o técnico fica fixo na tela e o cenário rola sem tremer.
 - `scale_check.gd` (com janela): captura menu e jogo em várias resoluções (1366x768, 1920x1080...).
 - `profile.gd` (com janela): anda pelo escritório e mostra FPS, tempo de desenho e *draw calls*.
 
-**Desempenho:** piso e paredes do fundo ficam numa camada estática (desenhada uma vez), e todos os sprites do mundo vêm de um único atlas, então a placa de vídeo desenha o andar inteiro em ~30 chamadas por quadro.
+**Desempenho (2D):** piso e paredes do fundo ficam numa camada estática (desenhada uma vez), e todos os sprites do mundo vêm de um único atlas, então a placa de vídeo desenha o andar inteiro em ~30 chamadas por quadro.
 
 ## Pixel art
 
@@ -129,6 +138,7 @@ scenes/main.tscn              mundo (SubViewport 640x360), HUD, atendimento e me
 scripts/main.gd               fluxo do jogo (título, expediente, atendimento, fim do dia)
 scripts/ticket_system.gd      fila de chamados, relógio, SLA e satisfação (sem UI)
 scripts/office_map.gd         andar: salas, mesas, colisão e desenho isométrico ordenado por profundidade
+scripts/office_3d.gd          versão 3D: monta o mesmo andar em 3D low poly a partir dos dados do office_map
 scripts/player.gd             técnico controlado pelo teclado (direções da tela → mundo)
 scripts/guide.gd              seta para o chamado mais urgente
 scripts/minimap.gd            minimapa

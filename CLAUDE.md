@@ -12,6 +12,8 @@ Detalhes para jogadores e professor: `README.md`.
 
 - `scripts/main.gd` — fluxo (menu, expediente, atendimento, pausa, fim), câmera, escala, toque
 - `scripts/office_map.gd` — salas, mesas, colisão, rota (AStarGrid2D), desenho isométrico
+- `scripts/office_3d.gd` — versão 3D (escolhida no menu): só desenho; usa os dados, a colisão e a
+  rota do `office_map`. `main.gd::_world_to_ui`/`_speaker` convertem mundo → tela nos dois visuais
 - `scripts/ticket_system.gd` — chamados, prazos, pontuação, nota (sem interface)
 - `scripts/helpdesk.gd` — conteúdo dos casos; `scripts/tasks/` — minijogos
 - `scripts/report.gd` + `web/verificar.html` — relatório e conferência pelo professor
@@ -27,7 +29,8 @@ godot --headless --path . -s tests/test_game.gd
 godot --headless --fixed-fps 60 --path . -s tests/test_camera.gd
 xvfb-run -a godot --path . -s tests/screenshot.gd -- <pasta>        # capturas de todas as telas
 xvfb-run -a -s "-screen 0 2600x1500x24" godot --path . --resolution 1366x768 -s tests/scale_check.gd -- <pasta> 1366x768
-xvfb-run -a godot --path . -s tests/profile.gd                       # FPS e draw calls
+xvfb-run -a godot --path . -s tests/screenshot3d.gd -- <pasta>      # capturas da versão 3D
+xvfb-run -a godot --path . -s tests/profile.gd [-- 3d]              # FPS e draw calls
 ```
 
 Todos os testes devem passar antes de um commit; mudança visível é conferida com captura.
@@ -38,6 +41,8 @@ Todos os testes devem passar antes de um commit; mudança visível é conferida 
 - Problemas de suporte do dia a dia, sem conteúdo de redes (os alunos ainda não viram).
 - Penalidades leves (erro −10, prazo estourado −20). Se mudar pontuação ou nota, atualizar
   juntos: código, `README.md`, ajuda do menu (`scripts/menu.gd`) e testes.
+- 2D e 3D são o mesmo jogo: regra, chamado ou pontuação nova vale para os dois. O 3D roda em
+  placa fraca e celular: cenário fixo numa malha só, sem sombra em tempo real nem MSAA.
 - Mundo em pixel art sempre em escala inteira de pixels reais (evita tremor); textos em
   Atkinson Hyperlegible; jogável por teclado, mouse e toque.
 - Mudar `Report.SALT` (`scripts/report.gd`) ou o formato do relatório invalida relatórios já entregues.

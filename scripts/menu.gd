@@ -13,8 +13,9 @@ const C_YELLOW := Color("feae34")
 const C_MUTED := Color("c0cbdc")
 
 var audio: Audio
-var profile := {"name": "", "class_code": "", "skin": 0, "hair": 0, "shirt": 0, "body": 0}
+var profile := {"name": "", "class_code": "", "skin": 0, "hair": 0, "shirt": 0, "body": 0, "view": "2d"}
 var _body_buttons: Array[Button] = []
+var _view_buttons := {}      # "2d"/"3d" -> Button
 var mode := "avaliacao"
 var _saved := {}
 var _name: LineEdit
@@ -38,6 +39,8 @@ func _ready() -> void:
 		profile = _saved.profile.duplicate()
 		if not profile.has("body"):
 			profile.body = 0
+		if not profile.has("view"):
+			profile.view = "2d"
 	# fundo: o escritório aparece por trás, escurecido
 	var dim := ColorRect.new()
 	dim.color = Color(0.06, 0.05, 0.12, 0.82)
@@ -210,6 +213,23 @@ func _mode_card() -> Control:
 		"Um expediente de 5 minutos.\nNo fim: nota de 0 a 10 e relatório\npara enviar ao professor."))
 	box.add_child(_mode_option("treino", "TREINO",
 		"Dias seguidos, cada vez mais difíceis.\nSessão salva para continuar depois."))
+	# visual: o mesmo jogo em pixel art (2D) ou em 3D
+	box.add_child(_label("Visual do jogo", 15, C_MUTED))
+	var vrow := HBoxContainer.new()
+	vrow.add_theme_constant_override("separation", 6)
+	for v in [["2d", "2D pixel art"], ["3d", "3D"]]:
+		var b := Button.new()
+		b.text = v[1]
+		b.focus_mode = Control.FOCUS_NONE
+		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		b.add_theme_font_size_override("font_size", 16)
+		b.pressed.connect(func():
+			profile.view = v[0]
+			if audio: audio.play("click", -6.0)
+			_refresh())
+		vrow.add_child(b)
+		_view_buttons[v[0]] = b
+	box.add_child(vrow)
 	var sp := Control.new()
 	sp.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	box.add_child(sp)
@@ -339,6 +359,16 @@ func _refresh() -> void:
 		for state in ["normal", "hover", "pressed"]:
 			_body_buttons[i].add_theme_stylebox_override(state, bs)
 		_body_buttons[i].add_theme_color_override("font_color", Color.WHITE if sel else C_MUTED)
+	for key in _view_buttons:
+		var sel: bool = str(profile.get("view", "2d")) == key
+		var vs := StyleBoxFlat.new()
+		vs.bg_color = C_CARD2 if sel else Color("1d2238")
+		vs.border_color = Color.WHITE if sel else C_INK
+		vs.set_border_width_all(3 if sel else 2)
+		vs.set_content_margin_all(6)
+		for state in ["normal", "hover", "pressed"]:
+			_view_buttons[key].add_theme_stylebox_override(state, vs)
+		_view_buttons[key].add_theme_color_override("font_color", Color.WHITE if sel else C_MUTED)
 	_preview_name.text = _name.text.strip_edges() if _name and _name.text.strip_edges() != "" else "Seu nome"
 	for key in _swatches:
 		var list: Array = _swatches[key][0]

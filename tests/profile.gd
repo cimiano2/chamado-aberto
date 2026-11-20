@@ -1,6 +1,6 @@
 extends SceneTree
 ## Mede desempenho com renderização real (precisa de display):
-##   godot --path . -s tests/profile.gd
+##   godot --path . -s tests/profile.gd [-- 3d]
 ## Anda pelo escritório com chamados abertos e registra FPS, tempos e chamadas de desenho.
 
 func _key(code: Key, down: bool) -> void:
@@ -16,7 +16,9 @@ func _init() -> void:
 	var main: Node = load("res://scenes/main.tscn").instantiate()
 	root.add_child(main)
 	for i in 5: await process_frame
-	main.start_session({"name": "Perf", "class_code": "", "skin": 0, "hair": 0, "shirt": 0, "body": 0}, "treino", false)
+	var view := "3d" if "3d" in OS.get_cmdline_user_args() else "2d"
+	print("PERF visual=", view)
+	main.start_session({"name": "Perf", "class_code": "", "skin": 0, "hair": 0, "shirt": 0, "body": 0, "view": view}, "treino", false)
 	var ts: TicketSystem = main.tickets
 	for i in 5: ts.spawn()
 	ts.spawn_timer = 9999.0
